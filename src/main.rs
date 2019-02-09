@@ -4,7 +4,7 @@ use std::ops::Mul;
 use std::ops::Neg;
 use std::ops::Sub;
 
-#[derive(Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 struct Tuple {
     x: f64,
     y: f64,
@@ -24,6 +24,16 @@ impl Tuple {
     }
     fn normalized(&self) -> Tuple {
         self / self.magnitude()
+    }
+    fn dot(&self, other: Tuple) -> f64 {
+        self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
+    }
+    fn cross(&self, other: Tuple) -> Tuple {
+        vector(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x,
+        )
     }
 }
 
@@ -267,5 +277,20 @@ mod tuples {
         let v = vector(1.0, 2.0, 3.0);
         let norm = v.normalized();
         assert_eq!(norm.magnitude(), 1.0);
+    }
+
+    #[test]
+    fn the_dot_product_of_two_tuples() {
+        let a = vector(1.0, 2.0, 3.0);
+        let b = vector(2.0, 3.0, 4.0);
+        assert_eq!(a.dot(b), 20.0);
+    }
+
+    #[test]
+    fn the_cross_product_of_two_vectors() {
+        let a = vector(1.0, 2.0, 3.0);
+        let b = vector(2.0, 3.0, 4.0);
+        assert_eq!(a.cross(b), vector(-1.0, 2.0, -1.0));
+        assert_eq!(b.cross(a), vector(1.0, -2.0, 1.0));
     }
 }
