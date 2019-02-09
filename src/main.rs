@@ -22,6 +22,9 @@ impl Tuple {
     fn magnitude(&self) -> f64 {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
     }
+    fn normalized(&self) -> Tuple {
+        self / self.magnitude()
+    }
 }
 
 impl Add for Tuple {
@@ -75,7 +78,8 @@ impl Mul<f64> for Tuple {
         }
     }
 }
-impl Div<f64> for Tuple {
+
+impl<'a> Div<f64> for &'a Tuple {
     type Output = Tuple;
 
     fn div(self, other: f64) -> Tuple {
@@ -85,6 +89,14 @@ impl Div<f64> for Tuple {
             z: self.z / other,
             w: self.w / other,
         }
+    }
+}
+
+impl Div<f64> for Tuple {
+    type Output = Tuple;
+
+    fn div(self, other: f64) -> Tuple {
+        &self / other
     }
 }
 
@@ -229,5 +241,31 @@ mod tuples {
     fn computing_the_magnitude_of_vector_neg_1_2_3() {
         let v = vector(-1.0, -2.0, -3.0);
         assert_eq!(v.magnitude(), 14.0_f64.sqrt());
+    }
+
+    #[test]
+    fn normalizing_vector_4_0_0() {
+        let v = vector(4.0, 0.0, 0.0);
+        assert_eq!(v.normalized(), vector(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn normalizing_vector_1_2_3() {
+        let v = vector(1.0, 2.0, 3.0);
+        assert_eq!(
+            v.normalized(),
+            vector(
+                1.0 / 14.0_f64.sqrt(),
+                2.0 / 14.0_f64.sqrt(),
+                3.0 / 14.0_f64.sqrt()
+            )
+        );
+    }
+
+    #[test]
+    fn the_magnitude_of_a_normalized_vector() {
+        let v = vector(1.0, 2.0, 3.0);
+        let norm = v.normalized();
+        assert_eq!(norm.magnitude(), 1.0);
     }
 }
