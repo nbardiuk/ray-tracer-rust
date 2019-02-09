@@ -12,6 +12,7 @@ struct Tuple {
     w: f64,
 }
 
+
 impl Tuple {
     fn is_point(&self) -> bool {
         self.w == 1.0
@@ -120,6 +121,16 @@ fn vector(x: f64, y: f64, z: f64) -> Tuple {
     Tuple { x, y, z, w: 0.0 }
 }
 
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+struct Color {
+    red: f64,
+    green: f64,
+    blue: f64,
+}
+fn color(red: f64, green: f64, blue: f64) -> Color {
+    Color { red, green, blue }
+}
 
 #[cfg(test)]
 mod spec {
@@ -287,5 +298,13 @@ mod spec {
         let b = vector(2.0, 3.0, 4.0);
         assert_eq!(a.cross(b), vector(-1.0, 2.0, -1.0));
         assert_eq!(b.cross(a), vector(1.0, -2.0, 1.0));
+    }
+
+    #[test]
+    fn colors_are_red_green_blue_tuples() {
+        let c = color(-0.5, 0.4, 1.7);
+        assert_eq!(c.red, -0.5);
+        assert_eq!(c.green, 0.4);
+        assert_eq!(c.blue, 1.7);
     }
 }
