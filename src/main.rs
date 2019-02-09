@@ -1,6 +1,6 @@
 use std::ops::Add;
-use std::ops::Mul;
 use std::ops::Div;
+use std::ops::Mul;
 use std::ops::Neg;
 use std::ops::Sub;
 
@@ -18,6 +18,9 @@ impl Tuple {
     }
     fn is_vector(&self) -> bool {
         self.w == 0.0
+    }
+    fn magnitude(&self) -> f64 {
+        (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
     }
 }
 
@@ -196,5 +199,35 @@ mod tuples {
     fn dividing_a_tuple_by_a_scalar() {
         let a = tuple(1.0, -2.0, 3.0, -4.0);
         assert_eq!(a / 2.0, tuple(0.5, -1.0, 1.5, -2.0));
+    }
+
+    #[test]
+    fn computing_the_magnitude_of_vector_1_0_0() {
+        let v = vector(1.0, 0.0, 0.0);
+        assert_eq!(v.magnitude(), 1.0);
+    }
+
+    #[test]
+    fn computing_the_magnitude_of_vector_0_1_0() {
+        let v = vector(0.0, 1.0, 0.0);
+        assert_eq!(v.magnitude(), 1.0);
+    }
+
+    #[test]
+    fn computing_the_magnitude_of_vector_0_0_1() {
+        let v = vector(0.0, 0.0, 1.0);
+        assert_eq!(v.magnitude(), 1.0);
+    }
+
+    #[test]
+    fn computing_the_magnitude_of_vector_1_2_3() {
+        let v = vector(1.0, 2.0, 3.0);
+        assert_eq!(v.magnitude(), 14.0_f64.sqrt());
+    }
+
+    #[test]
+    fn computing_the_magnitude_of_vector_neg_1_2_3() {
+        let v = vector(-1.0, -2.0, -3.0);
+        assert_eq!(v.magnitude(), 14.0_f64.sqrt());
     }
 }
