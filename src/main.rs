@@ -1,6 +1,8 @@
 mod canvas;
 mod matrices;
 mod ppm;
+mod rays;
+mod spheres;
 mod transformations;
 mod tuples;
 

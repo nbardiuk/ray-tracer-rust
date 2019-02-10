@@ -34,7 +34,7 @@ impl Tuple {
     pub fn normalized(&self) -> Tuple {
         self / self.magnitude()
     }
-    fn dot(&self, other: Tuple) -> f64 {
+    pub fn dot(&self, other: Tuple) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
     }
     fn cross(&self, other: Tuple) -> Tuple {
