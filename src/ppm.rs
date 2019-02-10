@@ -1,5 +1,5 @@
-use tuples::{Color};
-use canvas::{Canvas};
+use canvas::Canvas;
+use tuples::Color;
 
 impl Canvas {
     pub fn to_ppm(&self) -> String {
@@ -12,61 +12,53 @@ impl Canvas {
 
     fn ppm_pixels(&self) -> String {
         let rows = self.pixels.chunks(self.width);
-        let rows = rows
-            .map(|row| {
-                row.iter()
-                    .flat_map(|pixel| colors(pixel))
-                    .collect::<Vec<String>>()
-                    .join(" ")
-            })
-            .map(|line| wrap(line, 70));
-        rows.collect::<Vec<String>>().join("\n")
+        let lines = rows
+            .map(|row| row.iter().flat_map(|pixel| colors(pixel)))
+            .flat_map(|row| wrap(row, 70));
+        lines.collect::<Vec<String>>().join("\n")
     }
 }
 
-fn wrap(line: String, max_len: usize) -> String {
-    if line.len() <= max_len {
-        line
-    } else {
-        line.split_whitespace()
-            .fold(vec![], |mut acc: Vec<String>, s| match acc.pop() {
-                Some(last) => {
-                    if last.len() + 1 + s.len() <= max_len {
-                        acc.push(last + " " + s);
-                        acc
-                    } else {
-                        acc.push(last);
-                        acc.push(s.to_string());
-                        acc
-                    }
-                }
-                None => {
-                    acc.push(s.to_string());
-                    acc
-                }
-            })
-            .join("\n")
-    }
+fn wrap(words: impl Iterator<Item = String>, max_len: usize) -> Vec<String> {
+    words.fold(vec![], |mut lines: Vec<String>, word| match lines.pop() {
+        None => {
+            lines.push(word);
+            lines
+        }
+        Some(line) => {
+            if line.len() + 1 + word.len() <= max_len {
+                lines.push(line + " " + &word);
+                lines
+            } else {
+                lines.push(line);
+                lines.push(word);
+                lines
+            }
+        }
+    })
 }
 
 fn colors(c: &Color) -> Vec<String> {
-    vec![to255(c.red), to255(c.green), to255(c.blue)]
+    vec![c.red, c.green, c.blue]
+        .iter()
+        .map(|f| clip_range(*f, 0.0, 255.0).to_string())
+        .collect()
 }
 
-fn to255(f: f64) -> String {
+fn clip_range(f: f64, low: f64, up: f64) -> f64 {
     if f > 1.0 {
-        to255(1.0)
+        up
     } else if f < 0.0 {
-        to255(0.0)
+        low
     } else {
-        (f * 255.0).ceil().to_string()
+        (f * up).ceil()
     }
 }
+
 #[cfg(test)]
 mod spec {
-    use canvas::{canvas};
-    use tuples::{color};
-
+    use canvas::canvas;
+    use tuples::color;
 
     #[test]
     fn constructing_the_ppm_header() {
