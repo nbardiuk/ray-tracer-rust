@@ -130,12 +130,12 @@ fn vector(x: f64, y: f64, z: f64) -> Tuple {
 }
 
 #[derive(Copy, Clone, Debug)]
-struct Color {
-    red: f64,
-    green: f64,
-    blue: f64,
+pub struct Color {
+    pub red: f64,
+    pub green: f64,
+    pub blue: f64,
 }
-fn color(red: f64, green: f64, blue: f64) -> Color {
+pub fn color(red: f64, green: f64, blue: f64) -> Color {
     Color { red, green, blue }
 }
 impl Add for Color {
