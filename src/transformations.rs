@@ -49,6 +49,17 @@ fn rotation_z(r: f64) -> Matrix {
     Matrix { data }
 }
 
+fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix {
+    let mut data = identity_matrix().data;
+    data[0][1] = xy;
+    data[0][2] = xz;
+    data[1][0] = yx;
+    data[1][2] = yz;
+    data[2][0] = zx;
+    data[2][1] = zy;
+    Matrix { data }
+}
+
 #[cfg(test)]
 mod spec {
     use super::*;
@@ -147,5 +158,47 @@ mod spec {
             point(-2_f64.sqrt() / 2., 2_f64.sqrt() / 2., 0.)
         );
         assert_eq!(full_quarter * p, point(-1., 0., 0.));
+    }
+
+    #[test]
+    fn a_shearing_transformation_moves_x_in_proportion_to_y() {
+        let transform = shearing(1., 0., 0., 0., 0., 0.);
+        let p = point(2., 3., 4.);
+        assert_eq!(transform * p, point(5., 3., 4.));
+    }
+
+    #[test]
+    fn a_shearing_transformation_moves_x_in_proportion_to_z() {
+        let transform = shearing(0., 1., 0., 0., 0., 0.);
+        let p = point(2., 3., 4.);
+        assert_eq!(transform * p, point(6., 3., 4.));
+    }
+
+    #[test]
+    fn a_shearing_transformation_moves_y_in_proportion_to_x() {
+        let transform = shearing(0., 0., 1., 0., 0., 0.);
+        let p = point(2., 3., 4.);
+        assert_eq!(transform * p, point(2., 5., 4.));
+    }
+
+    #[test]
+    fn a_shearing_transformation_moves_y_in_proportion_to_z() {
+        let transform = shearing(0., 0., 0., 1., 0., 0.);
+        let p = point(2., 3., 4.);
+        assert_eq!(transform * p, point(2., 7., 4.));
+    }
+
+    #[test]
+    fn a_shearing_transformation_moves_z_in_proportion_to_x() {
+        let transform = shearing(0., 0., 0., 0., 1., 0.);
+        let p = point(2., 3., 4.);
+        assert_eq!(transform * p, point(2., 3., 6.));
+    }
+
+    #[test]
+    fn a_shearing_transformation_moves_z_in_proportion_to_y() {
+        let transform = shearing(0., 0., 0., 0., 0., 1.);
+        let p = point(2., 3., 4.);
+        assert_eq!(transform * p, point(2., 3., 7.));
     }
 }
