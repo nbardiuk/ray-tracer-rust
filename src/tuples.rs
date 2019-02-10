@@ -5,10 +5,10 @@ use std::ops::Neg;
 use std::ops::Sub;
 
 #[derive(Copy, Clone, Debug)]
-struct Tuple {
-    x: f64,
-    y: f64,
-    z: f64,
+pub struct Tuple {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
     w: f64,
 }
 
@@ -31,7 +31,7 @@ impl Tuple {
     fn magnitude(&self) -> f64 {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
     }
-    fn normalized(&self) -> Tuple {
+    pub fn normalized(&self) -> Tuple {
         self / self.magnitude()
     }
     fn dot(&self, other: Tuple) -> f64 {
@@ -122,10 +122,10 @@ impl Div<f64> for Tuple {
 fn tuple(x: f64, y: f64, z: f64, w: f64) -> Tuple {
     Tuple { x, y, z, w }
 }
-fn point(x: f64, y: f64, z: f64) -> Tuple {
+pub fn point(x: f64, y: f64, z: f64) -> Tuple {
     Tuple { x, y, z, w: 1.0 }
 }
-fn vector(x: f64, y: f64, z: f64) -> Tuple {
+pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
     Tuple { x, y, z, w: 0.0 }
 }
 

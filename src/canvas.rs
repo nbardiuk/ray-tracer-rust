@@ -1,12 +1,12 @@
 use tuples::{color, Color};
 
-struct Canvas {
-    width: usize,
-    height: usize,
+pub struct Canvas {
+    pub width: usize,
+    pub height: usize,
     pixels: Vec<Color>,
 }
 
-fn canvas(width: usize, height: usize) -> Canvas {
+pub fn canvas(width: usize, height: usize) -> Canvas {
     Canvas {
         width,
         height,
@@ -15,7 +15,7 @@ fn canvas(width: usize, height: usize) -> Canvas {
 }
 
 impl Canvas {
-    fn write_pixel(&mut self, x: usize, y: usize, c: Color) {
+    pub fn write_pixel(&mut self, x: usize, y: usize, c: Color) {
         let i = self.width * y + x;
         self.pixels[i] = c;
     }
@@ -25,7 +25,7 @@ impl Canvas {
         self.pixels[i]
     }
 
-    fn to_ppm(&self) -> String {
+    pub fn to_ppm(&self) -> String {
         self.ppm_header() + "\n" + &self.ppm_pixels() + "\n"
     }
 
@@ -47,7 +47,7 @@ impl Canvas {
     }
 }
 
-fn wrap(line: String, max_len:usize) -> String {
+fn wrap(line: String, max_len: usize) -> String {
     if line.len() <= max_len {
         line
     } else {
