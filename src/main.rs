@@ -1,6 +1,7 @@
 mod canvas;
 mod tuples;
 mod ppm;
+mod matrices;
 
 use canvas::{canvas, Canvas};
 use std::fs;
