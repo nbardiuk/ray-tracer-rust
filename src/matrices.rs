@@ -60,7 +60,14 @@ impl<'a> Mul for &'a Matrix {
 impl Mul<Tuple> for Matrix {
     type Output = Tuple;
     fn mul(self, other: Tuple) -> Tuple {
-        let rows = self.data;
+        &self * &other
+    }
+}
+
+impl<'a> Mul<&'a Tuple> for &'a Matrix {
+    type Output = Tuple;
+    fn mul(self, other: &'a Tuple) -> Tuple {
+        let rows = &self.data;
         let cols = matrix(&[&[other.x, other.y, other.z, other.w]]).data;
         let mut tuple = tuple(0., 0., 0., 0.);
         tuple.x = dot(&rows[0], &cols[0]);

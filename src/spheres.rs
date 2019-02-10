@@ -1,15 +1,21 @@
 use intersections::{intersection, intersections, Intersection};
+use matrices::{identity_matrix, Matrix};
 use rays::Ray;
 use tuples::point;
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Sphere {}
-
-pub fn sphere() -> Sphere {
-    Sphere {}
+pub struct Sphere {
+    transform: Matrix,
 }
 
-pub fn intersects<'a>(sphere: &'a Sphere, ray: Ray) -> Vec<Intersection<'a, Sphere>> {
+pub fn sphere() -> Sphere {
+    Sphere {
+        transform: identity_matrix(),
+    }
+}
+
+pub fn intersects<'a>(sphere: &'a Sphere, inray: Ray) -> Vec<Intersection<'a, Sphere>> {
+    let ray = inray.transform(sphere.transform.inverse());
     let sphere_to_ray = ray.origin - point(0., 0., 0.);
 
     let a = ray.direction.dot(ray.direction);
@@ -30,7 +36,9 @@ pub fn intersects<'a>(sphere: &'a Sphere, ray: Ray) -> Vec<Intersection<'a, Sphe
 #[cfg(test)]
 mod spec {
     use super::*;
+    use matrices::identity_matrix;
     use rays::ray;
+    use transformations::{scaling, translation};
     use tuples::{point, vector};
 
     #[test]
@@ -101,5 +109,42 @@ mod spec {
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].object, &s);
         assert_eq!(xs[1].object, &s);
+    }
+
+    #[test]
+    fn a_spheres_default_transformation() {
+        let s = sphere();
+        assert_eq!(s.transform, identity_matrix());
+    }
+
+    #[test]
+    fn changing_a_spheres_transformation() {
+        let mut s = sphere();
+        s.transform = translation(2., 3., 4.);
+        assert_eq!(s.transform, translation(2., 3., 4.));
+    }
+
+    #[test]
+    fn intersection_a_scaled_sphere_with_a_ray() {
+        let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
+        let mut s = sphere();
+        s.transform = scaling(2., 2., 2.);
+
+        let xs = intersects(&s, r);
+
+        assert_eq!(xs.len(), 2);
+        assert_eq!(xs[0].t, 3.);
+        assert_eq!(xs[1].t, 7.);
+    }
+
+    #[test]
+    fn intersection_a_translated_sphere_with_a_ray() {
+        let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
+        let mut s = sphere();
+        s.transform = translation(5., 0., 0.);
+
+        let xs = intersects(&s, r);
+
+        assert_eq!(xs.len(), 0);
     }
 }

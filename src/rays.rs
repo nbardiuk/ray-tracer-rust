@@ -1,3 +1,4 @@
+use matrices::Matrix;
 use tuples::Tuple;
 
 pub struct Ray {
@@ -9,6 +10,10 @@ impl Ray {
     pub fn position(&self, time: f64) -> Tuple {
         self.origin + self.direction * time
     }
+
+    pub fn transform(&self, m: Matrix) -> Ray {
+        ray(&m * &self.origin, &m * &self.direction)
+    }
 }
 
 pub fn ray(origin: Tuple, direction: Tuple) -> Ray {
@@ -18,6 +23,7 @@ pub fn ray(origin: Tuple, direction: Tuple) -> Ray {
 #[cfg(test)]
 mod spec {
     use super::*;
+    use transformations::{scaling, translation};
     use tuples::{point, vector};
 
     #[test]
@@ -38,5 +44,27 @@ mod spec {
         assert_eq!(r.position(1.), point(3., 3., 4.));
         assert_eq!(r.position(-1.), point(1., 3., 4.));
         assert_eq!(r.position(2.5), point(4.5, 3., 4.));
+    }
+
+    #[test]
+    fn translating_a_ray() {
+        let r = ray(point(1., 2., 3.), vector(0., 1., 0.));
+        let m = translation(3., 4., 5.);
+
+        let r2 = r.transform(m);
+
+        assert_eq!(r2.origin, point(4., 6., 8.));
+        assert_eq!(r2.direction, vector(0., 1., 0.));
+    }
+
+    #[test]
+    fn scaling_a_ray() {
+        let r = ray(point(1., 2., 3.), vector(0., 1., 0.));
+        let m = scaling(2., 3., 4.);
+
+        let r2 = r.transform(m);
+
+        assert_eq!(r2.origin, point(2., 6., 12.));
+        assert_eq!(r2.direction, vector(0., 3., 0.));
     }
 }
