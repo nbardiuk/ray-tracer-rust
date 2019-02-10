@@ -1,4 +1,5 @@
 mod canvas;
+mod intersections;
 mod matrices;
 mod ppm;
 mod rays;

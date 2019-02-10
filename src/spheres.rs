@@ -1,13 +1,15 @@
+use intersections::{intersection, intersections, Intersection};
 use rays::Ray;
 use tuples::point;
 
-struct Sphere {}
+#[derive(Debug, PartialEq, Clone)]
+pub struct Sphere {}
 
-fn sphere() -> Sphere {
+pub fn sphere() -> Sphere {
     Sphere {}
 }
 
-fn intersects(sphere: Sphere, ray: Ray) -> Vec<f64> {
+pub fn intersects<'a>(sphere: &'a Sphere, ray: Ray) -> Vec<Intersection<'a, Sphere>> {
     let sphere_to_ray = ray.origin - point(0., 0., 0.);
 
     let a = ray.direction.dot(ray.direction);
@@ -18,10 +20,10 @@ fn intersects(sphere: Sphere, ray: Ray) -> Vec<f64> {
     if discriminant < 0. {
         vec![]
     } else {
-        vec![
-            (-b - discriminant.sqrt()) / (2. * a),
-            (-b + discriminant.sqrt()) / (2. * a),
-        ]
+        intersections(
+            intersection((-b - discriminant.sqrt()) / (2. * a), sphere),
+            intersection((-b + discriminant.sqrt()) / (2. * a), sphere),
+        )
     }
 }
 
@@ -36,11 +38,11 @@ mod spec {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(s, r);
+        let xs = intersects(&s, r);
 
         assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0], 4.);
-        assert_eq!(xs[1], 6.);
+        assert_eq!(xs[0].t, 4.);
+        assert_eq!(xs[1].t, 6.);
     }
 
     #[test]
@@ -48,11 +50,11 @@ mod spec {
         let r = ray(point(0., 1., -5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(s, r);
+        let xs = intersects(&s, r);
 
         assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0], 5.);
-        assert_eq!(xs[1], 5.);
+        assert_eq!(xs[0].t, 5.);
+        assert_eq!(xs[1].t, 5.);
     }
 
     #[test]
@@ -60,7 +62,7 @@ mod spec {
         let r = ray(point(0., 2., -5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(s, r);
+        let xs = intersects(&s, r);
 
         assert_eq!(xs.len(), 0);
     }
@@ -70,11 +72,11 @@ mod spec {
         let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(s, r);
+        let xs = intersects(&s, r);
 
         assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0], -1.);
-        assert_eq!(xs[1], 1.);
+        assert_eq!(xs[0].t, -1.);
+        assert_eq!(xs[1].t, 1.);
     }
 
     #[test]
@@ -82,10 +84,22 @@ mod spec {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(s, r);
+        let xs = intersects(&s, r);
 
         assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0], -6.);
-        assert_eq!(xs[1], -4.);
+        assert_eq!(xs[0].t, -6.);
+        assert_eq!(xs[1].t, -4.);
+    }
+
+    #[test]
+    fn intersect_sets_the_object_on_the_intersection() {
+        let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
+        let s = sphere();
+
+        let xs = intersects(&s, r);
+
+        assert_eq!(xs.len(), 2);
+        assert_eq!(xs[0].object, &s);
+        assert_eq!(xs[1].object, &s);
     }
 }
