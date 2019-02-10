@@ -3,8 +3,8 @@ use std::ops::Mul;
 use tuples::{tuple, Tuple};
 
 #[derive(Clone, Debug)]
-struct Matrix {
-    data: Vec<Vec<f64>>,
+pub struct Matrix {
+    pub data: Vec<Vec<f64>>,
 }
 
 impl PartialEq for Matrix {
@@ -20,7 +20,7 @@ fn close(a: f64, b: f64) -> bool {
     (a - b).abs() <= 1e-5
 }
 
-fn matrix(args: &[&[f64]]) -> Matrix {
+pub fn matrix(args: &[&[f64]]) -> Matrix {
     let data = args
         .iter()
         .map(|row| Vec::from(*row))
@@ -91,7 +91,7 @@ impl Matrix {
         Matrix { data }
     }
 
-    fn inverse(&self) -> Matrix {
+    pub fn inverse(&self) -> Matrix {
         let det = self.determinant();
         let ct = self.cofactors().transpose();
         let h = ct.data[0].len();
@@ -152,7 +152,7 @@ impl Matrix {
     }
 }
 
-fn identity_matrix() -> Matrix {
+pub fn identity_matrix() -> Matrix {
     matrix(&[
         &[1., 0., 0., 0.],
         &[0., 1., 0., 0.],
