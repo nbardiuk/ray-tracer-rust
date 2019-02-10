@@ -201,4 +201,31 @@ mod spec {
         let p = point(2., 3., 4.);
         assert_eq!(transform * p, point(2., 3., 7.));
     }
+
+    #[test]
+    fn individual_transformations_are_applied_in_sequence() {
+        let p = point(1., 0., 1.);
+        let a = rotation_x(PI / 2.);
+        let b = scaling(5., 5., 5.);
+        let c = translation(10., 5., 7.);
+
+        let p = a * p;
+        assert_eq!(p, point(1., -1., 0.));
+
+        let p = b * p;
+        assert_eq!(p, point(5., -5., 0.));
+
+        let p = c * p;
+        assert_eq!(p, point(15., 0., 7.));
+    }
+
+    #[test]
+    fn chained_transformation_must_be_applied_in_reverse_order() {
+        let p = point(1., 0., 1.);
+        let a = rotation_x(PI / 2.);
+        let b = scaling(5., 5., 5.);
+        let c = translation(10., 5., 7.);
+
+        assert_eq!(c * b * a * p, point(15., 0., 7.));
+    }
 }
