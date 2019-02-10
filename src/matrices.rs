@@ -222,4 +222,28 @@ mod spec {
         assert_eq!(identity_matrix() * a, a);
     }
 
+    #[test]
+    fn transposing_a_matrix() {
+        let a = matrix(&[
+            &[0., 9., 3., 0.],
+            &[9., 8., 0., 8.],
+            &[1., 8., 5., 3.],
+            &[0., 0., 5., 8.],
+        ]);
+        assert_eq!(
+            a.transpose(),
+            matrix(&[
+                &[0., 9., 1., 0.],
+                &[9., 8., 8., 0.],
+                &[3., 0., 5., 5.],
+                &[0., 8., 3., 8.],
+            ])
+        );
+    }
+
+    #[test]
+    fn transposing_the_identity_matrix() {
+        let a = identity_matrix().transpose();
+        assert_eq!(a, identity_matrix());
+    }
 }
