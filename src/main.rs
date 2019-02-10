@@ -1,5 +1,6 @@
 mod canvas;
 mod tuples;
+mod ppm;
 
 use canvas::{canvas, Canvas};
 use std::fs;
