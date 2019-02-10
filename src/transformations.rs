@@ -16,9 +16,43 @@ fn scaling(x: f64, y: f64, z: f64) -> Matrix {
     Matrix { data }
 }
 
+fn rotation_x(r: f64) -> Matrix {
+    let mut data = identity_matrix().data;
+    let c = r.cos();
+    let s = r.sin();
+    data[1][1] = c;
+    data[1][2] = -s;
+    data[2][1] = s;
+    data[2][2] = c;
+    Matrix { data }
+}
+
+fn rotation_y(r: f64) -> Matrix {
+    let mut data = identity_matrix().data;
+    let c = r.cos();
+    let s = r.sin();
+    data[0][0] = c;
+    data[0][2] = s;
+    data[2][0] = -s;
+    data[2][2] = c;
+    Matrix { data }
+}
+
+fn rotation_z(r: f64) -> Matrix {
+    let mut data = identity_matrix().data;
+    let c = r.cos();
+    let s = r.sin();
+    data[0][0] = c;
+    data[0][1] = -s;
+    data[1][0] = s;
+    data[1][1] = c;
+    Matrix { data }
+}
+
 #[cfg(test)]
 mod spec {
     use super::*;
+    use std::f64::consts::PI;
     use tuples::{point, vector};
 
     #[test]
@@ -69,5 +103,49 @@ mod spec {
         let transform = scaling(-1., 1., 1.);
         let p = point(2., 3., 4.);
         assert_eq!(transform * p, point(-2., 3., 4.));
+    }
+
+    #[test]
+    fn rotating_a_point_around_the_x_axis() {
+        let p = point(0., 1., 0.);
+        let half_quarter = rotation_x(PI / 4.);
+        let full_quarter = rotation_x(PI / 2.);
+        assert_eq!(
+            half_quarter * p,
+            point(0., 2_f64.sqrt() / 2., 2_f64.sqrt() / 2.)
+        );
+        assert_eq!(full_quarter * p, point(0., 0., 1.));
+    }
+
+    #[test]
+    fn the_inverse_of_an_x_rotation_rotates_in_the_opposite_direction() {
+        let p = point(0., 1., 0.);
+        let half_quarter = rotation_x(PI / 4.);
+        let inv = half_quarter.inverse();
+        assert_eq!(inv * p, point(0., 2_f64.sqrt() / 2., -2_f64.sqrt() / 2.));
+    }
+
+    #[test]
+    fn rotating_a_point_around_the_y_axis() {
+        let p = point(0., 0., 1.);
+        let half_quarter = rotation_y(PI / 4.);
+        let full_quarter = rotation_y(PI / 2.);
+        assert_eq!(
+            half_quarter * p,
+            point(2_f64.sqrt() / 2., 0., 2_f64.sqrt() / 2.)
+        );
+        assert_eq!(full_quarter * p, point(1., 0., 0.));
+    }
+
+    #[test]
+    fn rotating_a_point_around_the_z_axis() {
+        let p = point(0., 1., 0.);
+        let half_quarter = rotation_z(PI / 4.);
+        let full_quarter = rotation_z(PI / 2.);
+        assert_eq!(
+            half_quarter * p,
+            point(-2_f64.sqrt() / 2., 2_f64.sqrt() / 2., 0.)
+        );
+        assert_eq!(full_quarter * p, point(-1., 0., 0.));
     }
 }
