@@ -9,7 +9,7 @@ pub struct Tuple {
     pub x: f64,
     pub y: f64,
     pub z: f64,
-    w: f64,
+    pub w: f64,
 }
 
 impl PartialEq for Tuple {
@@ -119,7 +119,7 @@ impl Div<f64> for Tuple {
     }
 }
 
-fn tuple(x: f64, y: f64, z: f64, w: f64) -> Tuple {
+pub fn tuple(x: f64, y: f64, z: f64, w: f64) -> Tuple {
     Tuple { x, y, z, w }
 }
 pub fn point(x: f64, y: f64, z: f64) -> Tuple {

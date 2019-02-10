@@ -1,4 +1,6 @@
 use std::ops::Index;
+use std::ops::Mul;
+use tuples::{tuple, Tuple};
 
 #[derive(Debug)]
 struct Matrix {
@@ -7,12 +9,13 @@ struct Matrix {
 
 impl PartialEq for Matrix {
     fn eq(&self, other: &Matrix) -> bool {
-        self.data
-            .iter()
-            .zip(other.data.iter())
-            .all(|(l, r)| l.iter().zip(r.iter()).all(|(a, b)| close(*a, *b)))
+        self.data.len() == other.data.len()
+            && self.data.iter().zip(other.data.iter()).all(|(l, r)| {
+                l.len() == r.len() && l.iter().zip(r.iter()).all(|(a, b)| close(*a, *b))
+            })
     }
 }
+
 fn close(a: f64, b: f64) -> bool {
     (a - b).abs() <= 1e-7
 }
@@ -32,9 +35,59 @@ impl Index<(usize, usize)> for Matrix {
     }
 }
 
+impl Mul for Matrix {
+    type Output = Matrix;
+    fn mul(self, other: Matrix) -> Matrix {
+        let rows = self.data;
+        let cols = other.transpose().data;
+        let mut data = vec![vec![0.; cols.len()]; rows.len()];
+        for i in 0..rows.len() {
+            for j in 0..cols.len() {
+                data[i][j] = dot(&rows[i], &cols[j]);
+            }
+        }
+        Matrix { data }
+    }
+}
+impl Mul<Tuple> for Matrix {
+    type Output = Tuple;
+    fn mul(self, other: Tuple) -> Tuple {
+        let rows = self.data;
+        let cols = matrix(&[&[other.x, other.y, other.z, other.w]]).data;
+        let mut tuple = tuple(0., 0., 0., 0.);
+        tuple.x = dot(&rows[0], &cols[0]);
+        tuple.y = dot(&rows[1], &cols[0]);
+        tuple.z = dot(&rows[2], &cols[0]);
+        tuple.w = dot(&rows[3], &cols[0]);
+        tuple
+    }
+}
+
+fn dot(a: &Vec<f64>, b: &Vec<f64>) -> f64 {
+    a.iter()
+        .zip(b.iter())
+        .map(|(l, r)| l * r)
+        .fold(0., |acc, f| acc + f)
+}
+
+impl Matrix {
+    fn transpose(&self) -> Matrix {
+        let w = self.data[0].len();
+        let h = self.data.len();
+        let mut data = vec![vec![0.; h]; w];
+        for i in 0..w {
+            for j in 0..h {
+                data[i][j] = self.data[j][i];
+            }
+        }
+        Matrix { data }
+    }
+}
+
 #[cfg(test)]
 mod spec {
     use super::*;
+    use tuples::tuple;
 
     #[test]
     fn constructing_and_inspecting_a_4x4_matrix() {
@@ -106,4 +159,40 @@ mod spec {
         ]);
         assert_ne!(a, b);
     }
+
+    #[test]
+    fn multiplying_two_matrices() {
+        let a = matrix(&[
+            &[1., 2., 3., 4.],
+            &[5., 6., 7., 8.],
+            &[9., 8., 7., 6.],
+            &[5., 4., 3., 2.],
+        ]);
+        let b = matrix(&[
+            &[-2., 1., 2., 3.],
+            &[3., 2., 1., -1.],
+            &[4., 3., 6., 5.],
+            &[1., 2., 7., 8.],
+        ]);
+        let ab = matrix(&[
+            &[20., 22., 50., 48.],
+            &[44., 54., 114., 108.],
+            &[40., 58., 110., 102.],
+            &[16., 26., 46., 42.],
+        ]);
+        assert_eq!(a * b, ab);
+    }
+
+    #[test]
+    fn a_matrix_multiplied_by_a_tuple() {
+        let a = matrix(&[
+            &[1., 2., 3., 4.],
+            &[2., 4., 4., 2.],
+            &[8., 6., 4., 1.],
+            &[0., 0., 0., 1.],
+        ]);
+        let b = tuple(1., 2., 3., 1.);
+        assert_eq!(a * b, tuple(18., 24., 33., 1.));
+    }
+
 }
