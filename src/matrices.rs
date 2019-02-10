@@ -2,7 +2,7 @@ use std::ops::Index;
 use std::ops::Mul;
 use tuples::{tuple, Tuple};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Matrix {
     data: Vec<Vec<f64>>,
 }
@@ -49,6 +49,7 @@ impl Mul for Matrix {
         Matrix { data }
     }
 }
+
 impl Mul<Tuple> for Matrix {
     type Output = Tuple;
     fn mul(self, other: Tuple) -> Tuple {
@@ -82,6 +83,15 @@ impl Matrix {
         }
         Matrix { data }
     }
+}
+
+fn identity_matrix() -> Matrix {
+    matrix(&[
+        &[1., 0., 0., 0.],
+        &[0., 1., 0., 0.],
+        &[0., 0., 1., 0.],
+        &[0., 0., 0., 1.],
+    ])
 }
 
 #[cfg(test)]
@@ -193,6 +203,23 @@ mod spec {
         ]);
         let b = tuple(1., 2., 3., 1.);
         assert_eq!(a * b, tuple(18., 24., 33., 1.));
+    }
+
+    #[test]
+    fn multiplying_a_matrix_by_the_identity_matrix() {
+        let a = matrix(&[
+            &[0., 1., 2., 4.],
+            &[1., 2., 4., 8.],
+            &[2., 4., 8., 16.],
+            &[4., 8., 16., 32.],
+        ]);
+        assert_eq!(a.clone() * identity_matrix(), a);
+    }
+
+    #[test]
+    fn multiplying_the_identity_matrix_by_a_tuple() {
+        let a = tuple(1., 2., 3., 4.);
+        assert_eq!(identity_matrix() * a, a);
     }
 
 }
