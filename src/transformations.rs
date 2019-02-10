@@ -1,6 +1,6 @@
 use matrices::{identity_matrix, Matrix};
 
-fn translation(x: f64, y: f64, z: f64) -> Matrix {
+pub fn translation(x: f64, y: f64, z: f64) -> Matrix {
     let mut data = identity_matrix().data;
     data[0][3] = x;
     data[1][3] = y;
@@ -8,7 +8,7 @@ fn translation(x: f64, y: f64, z: f64) -> Matrix {
     Matrix { data }
 }
 
-fn scaling(x: f64, y: f64, z: f64) -> Matrix {
+pub fn scaling(x: f64, y: f64, z: f64) -> Matrix {
     let mut data = identity_matrix().data;
     data[0][0] = x;
     data[1][1] = y;
@@ -16,7 +16,7 @@ fn scaling(x: f64, y: f64, z: f64) -> Matrix {
     Matrix { data }
 }
 
-fn rotation_x(r: f64) -> Matrix {
+pub fn rotation_x(r: f64) -> Matrix {
     let mut data = identity_matrix().data;
     let c = r.cos();
     let s = r.sin();
@@ -27,7 +27,7 @@ fn rotation_x(r: f64) -> Matrix {
     Matrix { data }
 }
 
-fn rotation_y(r: f64) -> Matrix {
+pub fn rotation_y(r: f64) -> Matrix {
     let mut data = identity_matrix().data;
     let c = r.cos();
     let s = r.sin();
@@ -38,7 +38,7 @@ fn rotation_y(r: f64) -> Matrix {
     Matrix { data }
 }
 
-fn rotation_z(r: f64) -> Matrix {
+pub fn rotation_z(r: f64) -> Matrix {
     let mut data = identity_matrix().data;
     let c = r.cos();
     let s = r.sin();
@@ -49,7 +49,7 @@ fn rotation_z(r: f64) -> Matrix {
     Matrix { data }
 }
 
-fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix {
+pub fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix {
     let mut data = identity_matrix().data;
     data[0][1] = xy;
     data[0][2] = xz;

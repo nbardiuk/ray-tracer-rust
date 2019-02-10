@@ -5,51 +5,27 @@ mod transformations;
 mod tuples;
 
 use canvas::{canvas, Canvas};
+use std::f64::consts::PI;
 use std::fs;
-use tuples::{color, point, vector, Tuple};
+use transformations::rotation_y;
+use tuples::{color, point, Tuple};
 
 fn main() {
-    let mut projectile = projectile(point(0., 1., 0.), vector(1., 1.8, 0.).normalized() * 11.25);
-    let env = environment(vector(0., -0.1, 0.), vector(-0.01, 0., 0.));
-    let mut canvas = canvas(900, 550);
+    let hours = (0..12)
+        .map(|i| rotation_y(i as f64 * PI / 6.) * point(0., 0., 1.))
+        .collect::<Vec<Tuple>>();
 
-    loop {
-        draw(&mut canvas, &projectile);
-        projectile = tick(&env, projectile);
-        if projectile.position.y < 0. {
-            break;
-        }
+    let mut canvas = canvas(300, 300);
+    for hour in hours {
+        draw(&mut canvas, hour);
     }
 
     fs::write("./canvas.ppm", canvas.to_ppm()).expect("Unable to write file");
 }
 
-fn draw(canvas: &mut Canvas, projectile: &Projectile) {
-    let x = projectile.position.x.round() as usize;
-    let y = canvas.height - projectile.position.y.round() as usize;
-    canvas.write_pixel(x, y, color(0., 1., 1.));
-}
-
-fn tick(env: &Environment, proj: Projectile) -> Projectile {
-    let position = proj.position + proj.velocity;
-    let velocity = proj.velocity + env.gravity + env.wind;
-    projectile(position, velocity)
-}
-
-struct Projectile {
-    position: Tuple,
-    velocity: Tuple,
-}
-
-fn projectile(position: Tuple, velocity: Tuple) -> Projectile {
-    Projectile { position, velocity }
-}
-
-struct Environment {
-    gravity: Tuple,
-    wind: Tuple,
-}
-
-fn environment(gravity: Tuple, wind: Tuple) -> Environment {
-    Environment { gravity, wind }
+fn draw(canvas: &mut Canvas, point: Tuple) {
+    let half_size = (canvas.height - 1) as f64 / 2.;
+    let x = (1. + point.x) * half_size;
+    let y = (1. - point.z) * half_size;
+    canvas.write_pixel(x.round() as usize, y.round() as usize, color(0., 1., 1.));
 }
