@@ -83,6 +83,36 @@ impl Matrix {
         }
         Matrix { data }
     }
+
+    fn determinant(&self) -> f64 {
+        if self.data.len() == 2 {
+            self[(0, 0)] * self[(1, 1)] - self[(0, 1)] * self[(1, 0)]
+        } else {
+            let mut det = 0.;
+            for column in 0..self.data.len() {
+                det += self.data[0][column] * self.cofactor(0, column);
+            }
+            det
+        }
+    }
+
+    fn submatrix(&self, row: usize, col: usize) -> Matrix {
+        let mut data = self.data.clone();
+        data.remove(row);
+        for r in &mut data {
+            r.remove(col);
+        }
+        Matrix { data: data }
+    }
+
+    fn minor(&self, row: usize, col: usize) -> f64 {
+        self.submatrix(row, col).determinant()
+    }
+
+    fn cofactor(&self, row: usize, col: usize) -> f64 {
+        let sign = if (row + col) % 2 == 0 { 1. } else { -1. };
+        sign * self.minor(row, col)
+    }
 }
 
 fn identity_matrix() -> Matrix {
@@ -245,5 +275,71 @@ mod spec {
     fn transposing_the_identity_matrix() {
         let a = identity_matrix().transpose();
         assert_eq!(a, identity_matrix());
+    }
+
+    #[test]
+    fn calculating_the_determinant_of_2x2_matrix() {
+        let a = matrix(&[&[1., 5.], &[-3., 2.]]);
+        assert_eq!(a.determinant(), 17.);
+    }
+
+    #[test]
+    fn a_submatrix_of_a_3x3_matrix_is_a_2x2_matrix() {
+        let a = matrix(&[&[1., 5., 0.], &[-3., 2., 7.], &[0., 6., -3.]]);
+        let s = matrix(&[&[-3., 2.], &[0., 6.]]);
+        assert_eq!(a.submatrix(0, 2), s);
+    }
+
+    #[test]
+    fn a_submatrix_of_a_4x4_matrix_is_a_3x3_matrix() {
+        let a = matrix(&[
+            &[-6., 1., 1., 6.],
+            &[-8., 5., 8., 6.],
+            &[-1., 0., 8., 2.],
+            &[-7., 1., -1., 1.],
+        ]);
+        let s = matrix(&[&[-6., 1., 6.], &[-8., 8., 6.], &[-7., -1., 1.]]);
+        assert_eq!(a.submatrix(2, 1), s);
+    }
+
+    #[test]
+    fn calculating_a_minor_of_a_3x3_matrix() {
+        let a = matrix(&[&[3., 5., 0.], &[2., -1., -7.], &[6., -1., 5.]]);
+        let b = a.submatrix(1, 0);
+        assert_eq!(b.determinant(), 25.0);
+        assert_eq!(a.minor(1, 0), 25.0);
+    }
+
+    #[test]
+    fn calculating_a_cofactor_of_a_3x3_matrix() {
+        let a = matrix(&[&[3., 5., 0.], &[2., -1., -7.], &[6., -1., 5.]]);
+        assert_eq!(a.minor(0, 0), -12.);
+        assert_eq!(a.cofactor(0, 0), -12.);
+        assert_eq!(a.minor(1, 0), 25.);
+        assert_eq!(a.cofactor(1, 0), -25.);
+    }
+
+    #[test]
+    fn calculating_the_determinant_of_3x3_matrix() {
+        let a = matrix(&[&[1., 2., 6.], &[-5., 8., -4.], &[2., 6., 4.]]);
+        assert_eq!(a.cofactor(0, 0), 56.);
+        assert_eq!(a.cofactor(0, 1), 12.);
+        assert_eq!(a.cofactor(0, 2), -46.);
+        assert_eq!(a.determinant(), -196.);
+    }
+
+    #[test]
+    fn calculating_the_determinant_of_4x4_matrix() {
+        let a = matrix(&[
+            &[-2., -8., 3., 5.],
+            &[-3., 1., 7., 3.],
+            &[1., 2., -9., 6.],
+            &[-6., 7., 7., -9.],
+        ]);
+        assert_eq!(a.cofactor(0, 0), 690.);
+        assert_eq!(a.cofactor(0, 1), 447.);
+        assert_eq!(a.cofactor(0, 2), 210.);
+        assert_eq!(a.cofactor(0, 3), 51.);
+        assert_eq!(a.determinant(), -4071.);
     }
 }
