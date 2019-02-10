@@ -17,7 +17,7 @@ impl PartialEq for Matrix {
 }
 
 fn close(a: f64, b: f64) -> bool {
-    (a - b).abs() <= 1e-7
+    (a - b).abs() <= 1e-5
 }
 
 fn matrix(args: &[&[f64]]) -> Matrix {
@@ -38,7 +38,14 @@ impl Index<(usize, usize)> for Matrix {
 impl Mul for Matrix {
     type Output = Matrix;
     fn mul(self, other: Matrix) -> Matrix {
-        let rows = self.data;
+        &self * &other
+    }
+}
+
+impl<'a> Mul for &'a Matrix {
+    type Output = Matrix;
+    fn mul(self, other: &'a Matrix) -> Matrix {
+        let rows = &self.data;
         let cols = other.transpose().data;
         let mut data = vec![vec![0.; cols.len()]; rows.len()];
         for i in 0..rows.len() {
@@ -84,6 +91,20 @@ impl Matrix {
         Matrix { data }
     }
 
+    fn inverse(&self) -> Matrix {
+        let det = self.determinant();
+        let ct = self.cofactors().transpose();
+        let h = ct.data[0].len();
+        let w = ct.data.len();
+        let mut data = vec![vec![0.; h]; w];
+        for i in 0..w {
+            for j in 0..h {
+                data[i][j] = ct.data[i][j] / det;
+            }
+        }
+        Matrix { data }
+    }
+
     fn determinant(&self) -> f64 {
         if self.data.len() == 2 {
             self[(0, 0)] * self[(1, 1)] - self[(0, 1)] * self[(1, 0)]
@@ -112,6 +133,22 @@ impl Matrix {
     fn cofactor(&self, row: usize, col: usize) -> f64 {
         let sign = if (row + col) % 2 == 0 { 1. } else { -1. };
         sign * self.minor(row, col)
+    }
+
+    fn is_invertible(&self) -> bool {
+        self.determinant() != 0.
+    }
+
+    fn cofactors(&self) -> Matrix {
+        let h = self.data[0].len();
+        let w = self.data.len();
+        let mut data = vec![vec![0.; h]; w];
+        for i in 0..w {
+            for j in 0..h {
+                data[i][j] = self.cofactor(i, j);
+            }
+        }
+        Matrix { data }
     }
 }
 
@@ -243,7 +280,7 @@ mod spec {
             &[2., 4., 8., 16.],
             &[4., 8., 16., 32.],
         ]);
-        assert_eq!(a.clone() * identity_matrix(), a);
+        assert_eq!(&a * &identity_matrix(), a);
     }
 
     #[test]
@@ -341,5 +378,109 @@ mod spec {
         assert_eq!(a.cofactor(0, 2), 210.);
         assert_eq!(a.cofactor(0, 3), 51.);
         assert_eq!(a.determinant(), -4071.);
+    }
+
+    #[test]
+    fn testing_an_invertible_matrix_for_invertibility() {
+        let a = matrix(&[
+            &[6., 4., 4., 4.],
+            &[5., 5., 7., 6.],
+            &[4., -9., 3., -7.],
+            &[9., 1., 7., -6.],
+        ]);
+        assert_eq!(a.determinant(), -2120.);
+        assert!(a.is_invertible());
+    }
+
+    #[test]
+    fn testing_a_non_invertible_matrix_for_invertibility() {
+        let a = matrix(&[
+            &[-4., 2., -2., -3.],
+            &[9., 6., 2., 6.],
+            &[0., -5., 1., -5.],
+            &[0., 0., 0., 0.],
+        ]);
+        assert_eq!(a.determinant(), 0.);
+        assert!(!a.is_invertible());
+    }
+
+    #[test]
+    fn calculating_the_inverse_of_a_matrix() {
+        let a = matrix(&[
+            &[-5., 2., 6., -8.],
+            &[1., -5., 1., 8.],
+            &[7., 7., -6., -7.],
+            &[1., -3., 7., 4.],
+        ]);
+        let b = a.inverse();
+        assert_eq!(a.determinant(), 532.);
+        assert_eq!(a.cofactor(2, 3), -160.);
+        assert_eq!(b[(3, 2)], -160. / 532.);
+        assert_eq!(a.cofactor(3, 2), 105.);
+        assert_eq!(b[(2, 3)], 105. / 532.);
+        assert_eq!(
+            b,
+            matrix(&[
+                &[0.21805, 0.45113, 0.24060, -0.04511],
+                &[-0.80827, -1.45677, -0.44361, 0.52068],
+                &[-0.07895, -0.22368, -0.05263, 0.19737],
+                &[-0.52256, -0.81391, -0.30075, 0.30639],
+            ])
+        );
+    }
+
+    #[test]
+    fn calculating_the_inverse_of_another_matrix() {
+        let a = matrix(&[
+            &[8., -5., 9., 2.],
+            &[7., 5., 6., 1.],
+            &[-6., 0., 9., 6.],
+            &[-3., 0., -9., -4.],
+        ]);
+        assert_eq!(
+            a.inverse(),
+            matrix(&[
+                &[-0.15385, -0.15385, -0.28205, -0.53846],
+                &[-0.07692, 0.12308, 0.02564, 0.03077],
+                &[0.35897, 0.35897, 0.43590, 0.92308],
+                &[-0.69231, -0.69231, -0.76923, -1.92308],
+            ])
+        );
+    }
+
+    #[test]
+    fn calculating_the_inverse_of_third_matrix() {
+        let a = matrix(&[
+            &[9., 3., 0., 9.],
+            &[-5., -2., -6., -3.],
+            &[-4., 9., 6., 4.],
+            &[-7., 6., 6., 2.],
+        ]);
+        assert_eq!(
+            a.inverse(),
+            matrix(&[
+                &[-0.04074, -0.07778, 0.14444, -0.22222],
+                &[-0.07778, 0.033333, 0.36667, -0.33333],
+                &[-0.02901, -0.14630, -0.10926, 0.12963],
+                &[0.17778, 0.06667, -0.26667, 0.33333],
+            ])
+        );
+    }
+
+    #[test]
+    fn multiplying_a_product_by_its_inverse() {
+        let a = matrix(&[
+            &[3., -9., 7., 3.],
+            &[3., -8., 2., -9.],
+            &[-4., 4., 4., 1.],
+            &[-6., 5., -1., 1.],
+        ]);
+        let b = matrix(&[
+            &[9., 3., 0., 9.],
+            &[-5., -2., -6., -3.],
+            &[-4., 9., 6., 4.],
+            &[-7., 6., 6., 2.],
+        ]);
+        assert_eq!((&a * &b) * b.inverse(), a);
     }
 }
