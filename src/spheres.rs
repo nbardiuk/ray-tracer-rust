@@ -5,7 +5,7 @@ use tuples::point;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Sphere {
-    transform: Matrix,
+    pub transform: Matrix,
 }
 
 pub fn sphere() -> Sphere {

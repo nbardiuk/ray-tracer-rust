@@ -7,28 +7,38 @@ mod spheres;
 mod transformations;
 mod tuples;
 
-use canvas::{canvas, Canvas};
-use std::f64::consts::PI;
+use canvas::canvas;
+use intersections::hit;
+use rays::ray;
+use spheres::{intersects, sphere};
 use std::fs;
-use transformations::rotation_y;
-use tuples::{color, point, Tuple};
+use transformations::*;
+use tuples::{color, point};
 
 fn main() {
-    let hours = (0..12)
-        .map(|i| rotation_y(i as f64 * PI / 6.) * point(0., 0., 1.))
-        .collect::<Vec<Tuple>>();
+    let wall_z = 10.;
+    let wall_size = 7.;
+    let canvas_pixels = 200;
+    let pixel_size = wall_size / canvas_pixels as f64;
+    let half = wall_size / 2.;
 
-    let mut canvas = canvas(300, 300);
-    for hour in hours {
-        draw(&mut canvas, hour);
+    let mut sphere = sphere();
+    sphere.transform = shearing(1., 0., 0., 0., 0., 0.) * scaling(0.5, 1., 1.);
+
+    let ray_origin = point(0., 0., -5.);
+
+    let mut canvas = canvas(canvas_pixels, canvas_pixels);
+    for y in 0..canvas_pixels {
+        let world_y = half - pixel_size * y as f64;
+        for x in 0..canvas_pixels {
+            let world_x = half - pixel_size * x as f64;
+            let position = point(world_x, world_y, wall_z);
+            let r = ray(ray_origin, (position - ray_origin).normalized());
+            if hit(&intersects(&sphere, r)).is_some() {
+                canvas.write_pixel(x, y, color(0., 1., 1.));
+            }
+        }
     }
 
     fs::write("./canvas.ppm", canvas.to_ppm()).expect("Unable to write file");
-}
-
-fn draw(canvas: &mut Canvas, point: Tuple) {
-    let half_size = (canvas.height - 1) as f64 / 2.;
-    let x = (1. + point.x) * half_size;
-    let y = (1. - point.z) * half_size;
-    canvas.write_pixel(x.round() as usize, y.round() as usize, color(0., 1., 1.));
 }
