@@ -1,4 +1,5 @@
 use intersections::{intersection, intersections, Intersection};
+use materials::{material, Material};
 use matrices::{identity_matrix, Matrix};
 use rays::Ray;
 use tuples::{point, Tuple};
@@ -6,11 +7,13 @@ use tuples::{point, Tuple};
 #[derive(Debug, PartialEq, Clone)]
 pub struct Sphere {
     pub transform: Matrix,
+    material: Material,
 }
 
 pub fn sphere() -> Sphere {
     Sphere {
         transform: identity_matrix(),
+        material: material(),
     }
 }
 
@@ -46,6 +49,7 @@ impl Sphere {
 #[cfg(test)]
 mod spec {
     use super::*;
+    use materials::material;
     use matrices::identity_matrix;
     use rays::ray;
     use std::f64::consts::PI;
@@ -215,5 +219,23 @@ mod spec {
         let n = s.normal_at(point(0., a, -a));
 
         assert_eq!(n, vector(0., 0.97014, -0.24254));
+    }
+
+    #[test]
+    fn a_sphere_has_a_default_material() {
+        let s = sphere();
+        let m = s.material;
+        assert_eq!(m, material());
+    }
+
+    #[test]
+    fn a_sphere_may_be_assigned_a_material() {
+        let mut m = material();
+        m.ambient = 1.;
+
+        let mut s = sphere();
+        s.material = m.clone();
+
+        assert_eq!(s.material, m);
     }
 }
