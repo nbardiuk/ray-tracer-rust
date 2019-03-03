@@ -1,7 +1,7 @@
 use intersections::{intersection, intersections, Intersection};
 use matrices::{identity_matrix, Matrix};
 use rays::Ray;
-use tuples::point;
+use tuples::{point, Tuple};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Sphere {
@@ -33,12 +33,23 @@ pub fn intersects<'a>(sphere: &'a Sphere, inray: Ray) -> Vec<Intersection<'a, Sp
     }
 }
 
+impl Sphere {
+    pub fn normal_at(&self, world_point: Tuple) -> Tuple {
+        let object_point = self.transform.inverse() * world_point;
+        let object_normal = object_point - point(0., 0., 0.);
+        let mut world_normal = self.transform.inverse().transpose() * object_normal;
+        world_normal.w = 0.;
+        world_normal.normalized()
+    }
+}
+
 #[cfg(test)]
 mod spec {
     use super::*;
     use matrices::identity_matrix;
     use rays::ray;
-    use transformations::{scaling, translation};
+    use std::f64::consts::PI;
+    use transformations::{rotation_z, scaling, translation};
     use tuples::{point, vector};
 
     #[test]
@@ -146,5 +157,63 @@ mod spec {
         let xs = intersects(&s, r);
 
         assert_eq!(xs.len(), 0);
+    }
+
+    #[test]
+    fn the_normal_on_a_sphere_at_a_point_on_the_x_axis() {
+        let s = sphere();
+        let n = s.normal_at(point(1., 0., 0.));
+        assert_eq!(n, vector(1., 0., 0.));
+    }
+
+    #[test]
+    fn the_normal_on_a_sphere_at_a_point_on_the_y_axis() {
+        let s = sphere();
+        let n = s.normal_at(point(0., 1., 0.));
+        assert_eq!(n, vector(0., 1., 0.));
+    }
+
+    #[test]
+    fn the_normal_on_a_sphere_at_a_point_on_the_z_axis() {
+        let s = sphere();
+        let n = s.normal_at(point(0., 0., 1.));
+        assert_eq!(n, vector(0., 0., 1.));
+    }
+
+    #[test]
+    fn the_normal_on_a_sphere_at_a_nonaxial_point() {
+        let s = sphere();
+        let a = 3_f64.sqrt() / 3.;
+        let n = s.normal_at(point(a, a, a));
+        assert_eq!(n, vector(a, a, a));
+    }
+
+    #[test]
+    fn the_normal_is_a_normalized_vector() {
+        let s = sphere();
+        let a = 3_f64.sqrt() / 3.;
+        let n = s.normal_at(point(a, a, a));
+        assert_eq!(n, n.normalized());
+    }
+
+    #[test]
+    fn computing_the_normal_on_a_translated_sphere() {
+        let mut s = sphere();
+        s.transform = translation(0., 1., 0.);
+
+        let n = s.normal_at(point(0., 1.70711, -0.70711));
+
+        assert_eq!(n, vector(0., 0.70711, -0.70711));
+    }
+
+    #[test]
+    fn computing_the_normal_on_a_transformed_sphere() {
+        let mut s = sphere();
+        s.transform = scaling(1., 0.5, 1.) * rotation_z(PI / 5.);
+
+        let a = 2_f64.sqrt() / 2.;
+        let n = s.normal_at(point(0., a, -a));
+
+        assert_eq!(n, vector(0., 0.97014, -0.24254));
     }
 }

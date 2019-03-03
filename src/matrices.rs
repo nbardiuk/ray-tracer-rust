@@ -86,7 +86,7 @@ fn dot(a: &Vec<f64>, b: &Vec<f64>) -> f64 {
 }
 
 impl Matrix {
-    fn transpose(&self) -> Matrix {
+    pub fn transpose(&self) -> Matrix {
         let w = self.data[0].len();
         let h = self.data.len();
         let mut data = vec![vec![0.; h]; w];
