@@ -8,7 +8,7 @@ pub struct Ray {
 
 impl Ray {
     pub fn position(&self, time: f64) -> Tuple {
-        self.origin + self.direction * time
+        &self.origin + &self.direction * time
     }
 
     pub fn transform(&self, m: Matrix) -> Ray {
@@ -31,7 +31,7 @@ mod spec {
         let origin = point(1., 2., 3.);
         let direction = vector(4., 5., 6.);
 
-        let r = ray(origin, direction);
+        let r = ray(origin.clone(), direction.clone());
 
         assert_eq!(r.origin, origin);
         assert_eq!(r.direction, direction);

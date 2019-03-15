@@ -85,7 +85,7 @@ mod spec {
     fn translation_does_not_affect_vectors() {
         let transform = translation(5., -3., 2.);
         let v = vector(-3., 4., 5.);
-        assert_eq!(transform * v, v);
+        assert_eq!(&transform * &v, v);
     }
 
     #[test]
@@ -122,10 +122,10 @@ mod spec {
         let half_quarter = rotation_x(PI / 4.);
         let full_quarter = rotation_x(PI / 2.);
         assert_eq!(
-            half_quarter * p,
+            &half_quarter * &p,
             point(0., 2_f64.sqrt() / 2., 2_f64.sqrt() / 2.)
         );
-        assert_eq!(full_quarter * p, point(0., 0., 1.));
+        assert_eq!(&full_quarter * &p, point(0., 0., 1.));
     }
 
     #[test]
@@ -142,10 +142,10 @@ mod spec {
         let half_quarter = rotation_y(PI / 4.);
         let full_quarter = rotation_y(PI / 2.);
         assert_eq!(
-            half_quarter * p,
+            &half_quarter * &p,
             point(2_f64.sqrt() / 2., 0., 2_f64.sqrt() / 2.)
         );
-        assert_eq!(full_quarter * p, point(1., 0., 0.));
+        assert_eq!(&full_quarter * &p, point(1., 0., 0.));
     }
 
     #[test]
@@ -154,10 +154,10 @@ mod spec {
         let half_quarter = rotation_z(PI / 4.);
         let full_quarter = rotation_z(PI / 2.);
         assert_eq!(
-            half_quarter * p,
+            &half_quarter * &p,
             point(-2_f64.sqrt() / 2., 2_f64.sqrt() / 2., 0.)
         );
-        assert_eq!(full_quarter * p, point(-1., 0., 0.));
+        assert_eq!(&full_quarter * &p, point(-1., 0., 0.));
     }
 
     #[test]

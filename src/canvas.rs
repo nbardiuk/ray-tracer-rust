@@ -22,10 +22,9 @@ impl Canvas {
 
     fn pixel_at(&self, x: usize, y: usize) -> Color {
         let i = self.width * y + x;
-        self.pixels[i]
+        self.pixels[i].clone()
     }
 }
-
 
 #[cfg(test)]
 mod spec {
@@ -46,7 +45,7 @@ mod spec {
         let mut c = canvas(10, 20);
         let red = color(1.0, 0.0, 0.0);
         assert_eq!(c.pixel_at(2, 3), color(0.0, 0.0, 0.0));
-        c.write_pixel(2, 3, red);
+        c.write_pixel(2, 3, red.clone());
         assert_eq!(c.pixel_at(2, 3), red);
     }
 }

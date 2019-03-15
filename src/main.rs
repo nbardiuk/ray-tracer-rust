@@ -35,7 +35,7 @@ fn main() {
         for x in 0..canvas_pixels {
             let world_x = half - pixel_size * x as f64;
             let position = point(world_x, world_y, wall_z);
-            let r = ray(ray_origin, (position - ray_origin).normalized());
+            let r = ray(ray_origin.clone(), (&position - &ray_origin).normalized());
             if hit(&intersects(&sphere, r)).is_some() {
                 canvas.write_pixel(x, y, color(0., 1., 1.));
             }

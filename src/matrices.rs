@@ -293,7 +293,7 @@ mod spec {
     #[test]
     fn multiplying_the_identity_matrix_by_a_tuple() {
         let a = tuple(1., 2., 3., 4.);
-        assert_eq!(identity_matrix() * a, a);
+        assert_eq!(&identity_matrix() * &a, a);
     }
 
     #[test]

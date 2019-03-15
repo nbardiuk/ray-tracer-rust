@@ -4,7 +4,7 @@ use std::ops::Mul;
 use std::ops::Neg;
 use std::ops::Sub;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Tuple {
     pub x: f64,
     pub y: f64,
@@ -34,10 +34,10 @@ impl Tuple {
     pub fn normalized(&self) -> Tuple {
         self / self.magnitude()
     }
-    pub fn dot(&self, other: Tuple) -> f64 {
+    pub fn dot(&self, other: &Tuple) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
     }
-    fn cross(&self, other: Tuple) -> Tuple {
+    fn cross(&self, other: &Tuple) -> Tuple {
         vector(
             self.y * other.z - self.z * other.y,
             self.z * other.x - self.x * other.z,
@@ -45,12 +45,12 @@ impl Tuple {
         )
     }
     // todo: only vectors
-    pub fn reflect(&self, normal: Tuple) -> Tuple {
-        *self - normal * 2. * self.dot(normal)
+    pub fn reflect(&self, normal: &Tuple) -> Tuple {
+        self - normal * 2. * self.dot(normal)
     }
 }
 
-impl Add for Tuple {
+impl<'a> Add<Tuple> for &'a Tuple {
     type Output = Tuple;
 
     fn add(self, other: Tuple) -> Tuple {
@@ -62,17 +62,38 @@ impl Add for Tuple {
         }
     }
 }
-
-impl Sub for Tuple {
+impl Add for Tuple {
     type Output = Tuple;
 
-    fn sub(self, other: Tuple) -> Tuple {
+    fn add(self, other: Tuple) -> Tuple {
+        &self + other
+    }
+}
+
+impl<'a> Sub<&Tuple> for &'a Tuple {
+    type Output = Tuple;
+
+    fn sub(self, other: &Tuple) -> Tuple {
         Tuple {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
             w: self.w - other.w,
         }
+    }
+}
+impl<'a> Sub<Tuple> for &'a Tuple {
+    type Output = Tuple;
+
+    fn sub(self, other: Tuple) -> Tuple {
+        self - &other
+    }
+}
+impl Sub for Tuple {
+    type Output = Tuple;
+
+    fn sub(self, other: Tuple) -> Tuple {
+        &self - &other
     }
 }
 
@@ -89,7 +110,7 @@ impl Neg for Tuple {
     }
 }
 
-impl Mul<f64> for Tuple {
+impl<'a> Mul<f64> for &'a Tuple {
     type Output = Tuple;
 
     fn mul(self, other: f64) -> Tuple {
@@ -99,6 +120,13 @@ impl Mul<f64> for Tuple {
             z: self.z * other,
             w: self.w * other,
         }
+    }
+}
+impl Mul<f64> for Tuple {
+    type Output = Tuple;
+
+    fn mul(self, other: f64) -> Tuple {
+        &self * other
     }
 }
 
@@ -133,7 +161,7 @@ pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
     Tuple { x, y, z, w: 0.0 }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Color {
     pub red: f64,
     pub green: f64,
@@ -164,7 +192,8 @@ impl Sub for Color {
         }
     }
 }
-impl Mul<f64> for Color {
+
+impl<'a> Mul<f64> for &'a Color {
     type Output = Color;
 
     fn mul(self, other: f64) -> Color {
@@ -175,17 +204,32 @@ impl Mul<f64> for Color {
         }
     }
 }
-
-// hadamard product
-impl Mul<Color> for Color {
+impl Mul<f64> for Color {
     type Output = Color;
 
-    fn mul(self, other: Color) -> Color {
+    fn mul(self, other: f64) -> Color {
+        &self * other
+    }
+}
+
+// hadamard product
+impl<'a> Mul<&Color> for &'a Color {
+    type Output = Color;
+
+    fn mul(self, other: &Color) -> Color {
         Color {
             red: self.red * other.red,
             green: self.green * other.green,
             blue: self.blue * other.blue,
         }
+    }
+}
+
+impl Mul<Color> for Color {
+    type Output = Color;
+
+    fn mul(self, other: Color) -> Color {
+        &self * &other
     }
 }
 
@@ -356,15 +400,15 @@ mod spec {
     fn the_dot_product_of_two_tuples() {
         let a = vector(1.0, 2.0, 3.0);
         let b = vector(2.0, 3.0, 4.0);
-        assert_eq!(a.dot(b), 20.0);
+        assert_eq!(a.dot(&b), 20.0);
     }
 
     #[test]
     fn the_cross_product_of_two_vectors() {
         let a = vector(1.0, 2.0, 3.0);
         let b = vector(2.0, 3.0, 4.0);
-        assert_eq!(a.cross(b), vector(-1.0, 2.0, -1.0));
-        assert_eq!(b.cross(a), vector(1.0, -2.0, 1.0));
+        assert_eq!(a.cross(&b), vector(-1.0, 2.0, -1.0));
+        assert_eq!(b.cross(&a), vector(1.0, -2.0, 1.0));
     }
 
     #[test]
@@ -406,7 +450,7 @@ mod spec {
     fn reflecting_a_vector_approaching_at_45() {
         let v = vector(1., -1., 0.);
         let n = vector(0., 1., 0.);
-        let r = v.reflect(n);
+        let r = v.reflect(&n);
         assert_eq!(r, vector(1., 1., 0.));
     }
 
@@ -415,7 +459,7 @@ mod spec {
         let v = vector(0., -1., 0.);
         let a = 2_f64.sqrt() / 2.;
         let n = vector(a, a, 0.);
-        let r = v.reflect(n);
+        let r = v.reflect(&n);
         assert_eq!(r, vector(1., 0., 0.));
     }
 }

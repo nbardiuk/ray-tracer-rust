@@ -23,27 +23,27 @@ pub fn material() -> Material {
 impl Material {
     pub fn lighting(&self, light: PointLight, position: Tuple, eye: Tuple, normal: Tuple) -> Color {
         // combine the surface color with the light's color/intensity
-        let effective_color = self.color * light.intensity;
+        let effective_color = &self.color * &light.intensity;
 
         // find the direction to the light sourse
         let lightv = (light.position - position).normalized();
 
         //compute the ambient contribution
-        let ambient = effective_color * self.ambient;
+        let ambient = &effective_color * self.ambient;
 
         //light dot normal represents the cosine of the angle between the light vector and the
         //normal vector. A negative number means the light is on the other side of the surface.
-        let light_dot_normal = lightv.dot(normal);
+        let light_dot_normal = lightv.dot(&normal);
         let black = color(0.0, 0.0, 0.0);
         let diffuse = if light_dot_normal < 0. {
-            black
+            black.clone()
         } else {
             effective_color * self.diffuse * light_dot_normal
         };
-        let reflectv = (-lightv).reflect(normal);
+        let reflectv = (-lightv).reflect(&normal);
         //relfect dot eye represents the cosine of the angle between the reflectin vector and the
         //eye vector. A negative number means the light reflects away from the eye.
-        let reflect_dot_eye = reflectv.dot(eye);
+        let reflect_dot_eye = reflectv.dot(&eye);
         let specular = if reflect_dot_eye <= 0. {
             black
         } else {
