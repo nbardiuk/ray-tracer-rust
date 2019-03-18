@@ -7,7 +7,7 @@ use tuples::{point, Tuple};
 #[derive(Debug, PartialEq, Clone)]
 pub struct Sphere {
     pub transform: Matrix,
-    material: Material,
+    pub material: Material,
 }
 
 pub fn sphere() -> Sphere {
@@ -17,7 +17,7 @@ pub fn sphere() -> Sphere {
     }
 }
 
-pub fn intersects<'a>(sphere: &'a Sphere, inray: Ray) -> Vec<Intersection<'a, Sphere>> {
+pub fn intersects<'a>(sphere: &'a Sphere, inray: &Ray) -> Vec<Intersection<'a, Sphere>> {
     let ray = inray.transform(sphere.transform.inverse());
     let sphere_to_ray = ray.origin - point(0., 0., 0.);
 
@@ -37,8 +37,8 @@ pub fn intersects<'a>(sphere: &'a Sphere, inray: Ray) -> Vec<Intersection<'a, Sp
 }
 
 impl Sphere {
-    pub fn normal_at(&self, world_point: Tuple) -> Tuple {
-        let object_point = self.transform.inverse() * world_point;
+    pub fn normal_at(&self, world_point: &Tuple) -> Tuple {
+        let object_point = &self.transform.inverse() * world_point;
         let object_normal = object_point - point(0., 0., 0.);
         let mut world_normal = self.transform.inverse().transpose() * object_normal;
         world_normal.w = 0.;
@@ -61,7 +61,7 @@ mod spec {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, r);
+        let xs = intersects(&s, &r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 4.);
@@ -73,7 +73,7 @@ mod spec {
         let r = ray(point(0., 1., -5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, r);
+        let xs = intersects(&s, &r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 5.);
@@ -85,7 +85,7 @@ mod spec {
         let r = ray(point(0., 2., -5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, r);
+        let xs = intersects(&s, &r);
 
         assert_eq!(xs.len(), 0);
     }
@@ -95,7 +95,7 @@ mod spec {
         let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, r);
+        let xs = intersects(&s, &r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -1.);
@@ -107,7 +107,7 @@ mod spec {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, r);
+        let xs = intersects(&s, &r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -6.);
@@ -119,7 +119,7 @@ mod spec {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, r);
+        let xs = intersects(&s, &r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].object, &s);
@@ -145,7 +145,7 @@ mod spec {
         let mut s = sphere();
         s.transform = scaling(2., 2., 2.);
 
-        let xs = intersects(&s, r);
+        let xs = intersects(&s, &r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 3.);
@@ -158,7 +158,7 @@ mod spec {
         let mut s = sphere();
         s.transform = translation(5., 0., 0.);
 
-        let xs = intersects(&s, r);
+        let xs = intersects(&s, &r);
 
         assert_eq!(xs.len(), 0);
     }
@@ -166,21 +166,21 @@ mod spec {
     #[test]
     fn the_normal_on_a_sphere_at_a_point_on_the_x_axis() {
         let s = sphere();
-        let n = s.normal_at(point(1., 0., 0.));
+        let n = s.normal_at(&point(1., 0., 0.));
         assert_eq!(n, vector(1., 0., 0.));
     }
 
     #[test]
     fn the_normal_on_a_sphere_at_a_point_on_the_y_axis() {
         let s = sphere();
-        let n = s.normal_at(point(0., 1., 0.));
+        let n = s.normal_at(&point(0., 1., 0.));
         assert_eq!(n, vector(0., 1., 0.));
     }
 
     #[test]
     fn the_normal_on_a_sphere_at_a_point_on_the_z_axis() {
         let s = sphere();
-        let n = s.normal_at(point(0., 0., 1.));
+        let n = s.normal_at(&point(0., 0., 1.));
         assert_eq!(n, vector(0., 0., 1.));
     }
 
@@ -188,7 +188,7 @@ mod spec {
     fn the_normal_on_a_sphere_at_a_nonaxial_point() {
         let s = sphere();
         let a = 3_f64.sqrt() / 3.;
-        let n = s.normal_at(point(a, a, a));
+        let n = s.normal_at(&point(a, a, a));
         assert_eq!(n, vector(a, a, a));
     }
 
@@ -196,7 +196,7 @@ mod spec {
     fn the_normal_is_a_normalized_vector() {
         let s = sphere();
         let a = 3_f64.sqrt() / 3.;
-        let n = s.normal_at(point(a, a, a));
+        let n = s.normal_at(&point(a, a, a));
         assert_eq!(n, n.normalized());
     }
 
@@ -205,7 +205,7 @@ mod spec {
         let mut s = sphere();
         s.transform = translation(0., 1., 0.);
 
-        let n = s.normal_at(point(0., 1.70711, -0.70711));
+        let n = s.normal_at(&point(0., 1.70711, -0.70711));
 
         assert_eq!(n, vector(0., 0.70711, -0.70711));
     }
@@ -216,7 +216,7 @@ mod spec {
         s.transform = scaling(1., 0.5, 1.) * rotation_z(PI / 5.);
 
         let a = 2_f64.sqrt() / 2.;
-        let n = s.normal_at(point(0., a, -a));
+        let n = s.normal_at(&point(0., a, -a));
 
         assert_eq!(n, vector(0., 0.97014, -0.24254));
     }

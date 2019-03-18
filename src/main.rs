@@ -11,6 +11,8 @@ mod tuples;
 
 use canvas::canvas;
 use intersections::hit;
+use lights::point_light;
+use materials::material;
 use rays::ray;
 use spheres::{intersects, sphere};
 use std::fs;
@@ -26,8 +28,14 @@ fn main() {
 
     let mut sphere = sphere();
     sphere.transform = shearing(1., 0., 0., 0., 0., 0.) * scaling(0.5, 1., 1.);
+    sphere.material = material();
+    sphere.material.color = color(0., 1., 1.);
 
     let ray_origin = point(0., 0., -5.);
+
+    let light_position = point(-10., 10., -10.);
+    let ligth_color = color(1., 1., 1.);
+    let light = point_light(light_position, ligth_color);
 
     let mut canvas = canvas(canvas_pixels, canvas_pixels);
     for y in 0..canvas_pixels {
@@ -35,9 +43,16 @@ fn main() {
         for x in 0..canvas_pixels {
             let world_x = half - pixel_size * x as f64;
             let position = point(world_x, world_y, wall_z);
-            let r = ray(ray_origin.clone(), (&position - &ray_origin).normalized());
-            if hit(&intersects(&sphere, r)).is_some() {
-                canvas.write_pixel(x, y, color(0., 1., 1.));
+            let ray = ray(ray_origin.clone(), (&position - &ray_origin).normalized());
+            let intersects = intersects(&sphere, &ray);
+            let hit = hit(&intersects);
+            if hit.is_some() {
+                let point = ray.position(hit.unwrap().t);
+                let sphere = hit.unwrap().object;
+                let normal = sphere.normal_at(&point);
+                let eye = -ray.direction;
+                let color = sphere.material.lighting(&light, point, eye, normal);
+                canvas.write_pixel(x, y, color);
             }
         }
     }
