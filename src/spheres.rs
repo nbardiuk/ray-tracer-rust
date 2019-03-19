@@ -17,22 +17,24 @@ pub fn sphere() -> Sphere {
     }
 }
 
-pub fn intersects<'a>(sphere: &'a Sphere, inray: &Ray) -> Vec<Intersection<'a, Sphere>> {
-    let ray = inray.transform(sphere.transform.inverse());
-    let sphere_to_ray = ray.origin - point(0., 0., 0.);
+impl Sphere {
+    pub fn intersects<'a>(self: &'a Sphere, inray: &Ray) -> Vec<Intersection<'a, Sphere>> {
+        let ray = inray.transform(self.transform.inverse());
+        let sphere_to_ray = ray.origin - point(0., 0., 0.);
 
-    let a = ray.direction.dot(&ray.direction);
-    let b = 2. * ray.direction.dot(&sphere_to_ray);
-    let c = sphere_to_ray.dot(&sphere_to_ray) - 1.;
-    let discriminant = b.powi(2) - 4. * a * c;
+        let a = ray.direction.dot(&ray.direction);
+        let b = 2. * ray.direction.dot(&sphere_to_ray);
+        let c = sphere_to_ray.dot(&sphere_to_ray) - 1.;
+        let discriminant = b.powi(2) - 4. * a * c;
 
-    if discriminant < 0. {
-        vec![]
-    } else {
-        intersections(
-            intersection((-b - discriminant.sqrt()) / (2. * a), sphere),
-            intersection((-b + discriminant.sqrt()) / (2. * a), sphere),
-        )
+        if discriminant < 0. {
+            vec![]
+        } else {
+            intersections(
+                intersection((-b - discriminant.sqrt()) / (2. * a), self),
+                intersection((-b + discriminant.sqrt()) / (2. * a), self),
+            )
+        }
     }
 }
 
@@ -61,7 +63,7 @@ mod spec {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, &r);
+        let xs = s.intersects(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 4.);
@@ -73,7 +75,7 @@ mod spec {
         let r = ray(point(0., 1., -5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, &r);
+        let xs = s.intersects(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 5.);
@@ -85,7 +87,7 @@ mod spec {
         let r = ray(point(0., 2., -5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, &r);
+        let xs = s.intersects(&r);
 
         assert_eq!(xs.len(), 0);
     }
@@ -95,7 +97,7 @@ mod spec {
         let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, &r);
+        let xs = s.intersects(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -1.);
@@ -107,7 +109,7 @@ mod spec {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, &r);
+        let xs = s.intersects(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -6.);
@@ -119,7 +121,7 @@ mod spec {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
         let s = sphere();
 
-        let xs = intersects(&s, &r);
+        let xs = s.intersects(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].object, &s);
@@ -145,7 +147,7 @@ mod spec {
         let mut s = sphere();
         s.transform = scaling(2., 2., 2.);
 
-        let xs = intersects(&s, &r);
+        let xs = s.intersects(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 3.);
@@ -158,7 +160,7 @@ mod spec {
         let mut s = sphere();
         s.transform = translation(5., 0., 0.);
 
-        let xs = intersects(&s, &r);
+        let xs = s.intersects(&r);
 
         assert_eq!(xs.len(), 0);
     }

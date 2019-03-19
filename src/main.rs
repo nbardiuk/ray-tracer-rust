@@ -8,13 +8,14 @@ mod rays;
 mod spheres;
 mod transformations;
 mod tuples;
+mod world;
 
 use canvas::canvas;
 use intersections::hit;
 use lights::point_light;
 use materials::material;
 use rays::ray;
-use spheres::{intersects, sphere};
+use spheres::sphere;
 use std::fs;
 use transformations::*;
 use tuples::{color, point};
@@ -44,7 +45,7 @@ fn main() {
             let world_x = half - pixel_size * x as f64;
             let position = point(world_x, world_y, wall_z);
             let ray = ray(ray_origin.clone(), (&position - &ray_origin).normalized());
-            let intersects = intersects(&sphere, &ray);
+            let intersects = sphere.intersects(&ray);
             let hit = hit(&intersects);
             if hit.is_some() {
                 let point = ray.position(hit.unwrap().t);
