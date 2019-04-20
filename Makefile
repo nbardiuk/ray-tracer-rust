@@ -1,15 +1,10 @@
-default: render
+default: clean test render
 
-render: run
+render:
+	cargo run --release
 	xdg-open ./canvas.ppm
 
-run: build
-	cargo run --release
-
-build: clean
-	cargo build --release
-
-test: clean
+test:
 	cargo test
 
 clean:
