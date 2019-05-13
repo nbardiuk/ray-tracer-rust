@@ -1,3 +1,4 @@
+use intersections::Comps;
 use intersections::Intersection;
 use lights::point_light;
 use lights::PointLight;
@@ -7,6 +8,7 @@ use spheres::Sphere;
 use transformations::scaling;
 use tuples::color;
 use tuples::point;
+use tuples::Color;
 
 pub struct World<T> {
     objects: Vec<T>,
@@ -42,11 +44,25 @@ impl World<Sphere> {
         xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
         xs
     }
+
+    pub fn shade_hit<'a>(self: &World<Sphere>, comps: Comps<'a, Sphere>) -> Color {
+        match &self.light_source {
+            Some(light) => {
+                comps
+                    .object
+                    .material
+                    .lighting(light, comps.point, comps.eyev, comps.normalv)
+            }
+            None => color(0., 0., 0.),
+        }
+    }
 }
 
 #[cfg(test)]
 mod spec {
     use super::*;
+    use intersections::intersection;
+    use intersections::prepare_computations;
     use lights::point_light;
     use rays::ray;
     use spheres::sphere;
@@ -91,5 +107,32 @@ mod spec {
         assert_eq!(xs[1].t, 4.5);
         assert_eq!(xs[2].t, 5.5);
         assert_eq!(xs[3].t, 6.);
+    }
+
+    #[test]
+    fn shading_an_intersection() {
+        let w = default_world();
+        let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
+        let shape = &w.objects[0];
+        let i = intersection(4., shape);
+
+        let comps = prepare_computations(&i, &r);
+        let c = w.shade_hit(comps);
+
+        assert_eq!(c, color(0.38066, 0.47583, 0.2855));
+    }
+
+    #[test]
+    fn shading_an_intersection_from_the_inside() {
+        let mut w = default_world();
+        w.light_source = Some(point_light(point(0., 0.25, 0.), color(1., 1., 1.)));
+        let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
+        let shape = &w.objects[1];
+        let i = intersection(0.5, shape);
+
+        let comps = prepare_computations(&i, &r);
+        let c = w.shade_hit(comps);
+
+        assert_eq!(c, color(0.90498, 0.90498, 0.90498));
     }
 }

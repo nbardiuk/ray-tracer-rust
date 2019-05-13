@@ -1,30 +1,64 @@
+use rays::Ray;
+use tuples::Tuple;
+
+pub trait Object {
+    fn normal_at(&self, world_point: &Tuple) -> Tuple;
+}
+
 #[derive(Debug, PartialEq)]
-pub struct Intersection<'a, T> {
+pub struct Intersection<'a, T: Object> {
     pub t: f64,
     pub object: &'a T,
 }
 
-pub fn intersection<'a, T>(t: f64, object: &'a T) -> Intersection<'a, T> {
+pub fn intersection<'a, T: Object>(t: f64, object: &'a T) -> Intersection<'a, T> {
     Intersection { t, object }
 }
 
-pub fn intersections<'a, T>(
+pub fn intersections<'a, T: Object>(
     a: Intersection<'a, T>,
     b: Intersection<'a, T>,
 ) -> Vec<Intersection<'a, T>> {
     vec![a, b]
 }
 
-pub fn hit<'a, T>(xs: &'a Vec<Intersection<'a, T>>) -> Option<&'a Intersection<'a, T>> {
+pub fn hit<'a, T: Object>(xs: &'a Vec<Intersection<'a, T>>) -> Option<&'a Intersection<'a, T>> {
     xs.iter()
         .filter(|x| x.t >= 0.)
         .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
 }
 
+pub struct Comps<'a, T: Object> {
+    pub t: f64,
+    pub object: &'a T,
+    pub point: Tuple,
+    pub eyev: Tuple,
+    pub normalv: Tuple,
+    pub inside: bool,
+}
+
+pub fn prepare_computations<'a, T: Object>(i: &Intersection<'a, T>, r: &Ray) -> Comps<'a, T> {
+    let point = r.position(i.t);
+    let normalv = i.object.normal_at(&point);
+    let eyev = -(&r.direction);
+    let inside = normalv.dot(&eyev) < 0.;
+    Comps {
+        t: i.t,
+        object: i.object,
+        point,
+        eyev,
+        normalv: if inside { -normalv } else { normalv },
+        inside,
+    }
+}
+
 #[cfg(test)]
 mod spec {
     use super::*;
+    use rays::ray;
     use spheres::sphere;
+    use tuples::point;
+    use tuples::vector;
 
     #[test]
     fn an_intersection_encapsulates_t_and_object() {
@@ -87,5 +121,45 @@ mod spec {
         let xs = &vec![i1, i2, i3, i4];
 
         assert_eq!(hit(&xs).unwrap(), &intersection(2., &s));
+    }
+
+    #[test]
+    fn precomputes_the_state_of_an_intersection() {
+        let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
+        let shape = sphere();
+        let i = intersection(4., &shape);
+
+        let comps = prepare_computations(&i, &r);
+
+        assert_eq!(comps.t, i.t);
+        assert_eq!(comps.object, i.object);
+        assert_eq!(comps.point, point(0., 0., -1.));
+        assert_eq!(comps.eyev, vector(0., 0., -1.));
+        assert_eq!(comps.normalv, vector(0., 0., -1.));
+    }
+
+    #[test]
+    fn the_hit_when_an_intersection_occurs_on_the_outside() {
+        let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
+        let shape = sphere();
+        let i = intersection(4., &shape);
+
+        let comps = prepare_computations(&i, &r);
+
+        assert_eq!(comps.inside, false);
+    }
+
+    #[test]
+    fn the_hit_when_an_intersection_occurs_on_the_inside() {
+        let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
+        let shape = sphere();
+        let i = intersection(1., &shape);
+
+        let comps = prepare_computations(&i, &r);
+
+        assert_eq!(comps.inside, true);
+        assert_eq!(comps.point, point(0., 0., 1.));
+        assert_eq!(comps.eyev, vector(0., 0., -1.));
+        assert_eq!(comps.normalv, vector(0., 0., -1.));
     }
 }

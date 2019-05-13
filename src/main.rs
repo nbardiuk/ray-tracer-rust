@@ -12,6 +12,7 @@ mod world;
 
 use canvas::canvas;
 use intersections::hit;
+use intersections::Object;
 use lights::point_light;
 use materials::material;
 use rays::ray;

@@ -1,4 +1,4 @@
-use intersections::{intersection, intersections, Intersection};
+use intersections::{intersection, intersections, Intersection, Object};
 use materials::{material, Material};
 use matrices::{identity_matrix, Matrix};
 use rays::Ray;
@@ -38,8 +38,8 @@ impl Sphere {
     }
 }
 
-impl Sphere {
-    pub fn normal_at(&self, world_point: &Tuple) -> Tuple {
+impl Object for Sphere {
+    fn normal_at(&self, world_point: &Tuple) -> Tuple {
         let object_point = &self.transform.inverse() * world_point;
         let object_normal = object_point - point(0., 0., 0.);
         let mut world_normal = self.transform.inverse().transpose() * object_normal;

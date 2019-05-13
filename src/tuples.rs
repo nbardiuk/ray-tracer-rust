@@ -97,7 +97,7 @@ impl Sub for Tuple {
     }
 }
 
-impl Neg for Tuple {
+impl <'a> Neg for &'a Tuple {
     type Output = Tuple;
 
     fn neg(self) -> Tuple {
@@ -107,6 +107,13 @@ impl Neg for Tuple {
             z: -self.z,
             w: -self.w,
         }
+    }
+}
+impl Neg for Tuple {
+    type Output = Tuple;
+
+    fn neg(self) -> Tuple {
+        -&self
     }
 }
 
