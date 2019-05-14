@@ -29,7 +29,7 @@ impl Tuple {
         self.w == 0.0
     }
     fn magnitude(&self) -> f64 {
-        (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
+        (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
     }
     pub fn normalized(&self) -> Tuple {
         self / self.magnitude()
@@ -37,7 +37,7 @@ impl Tuple {
     pub fn dot(&self, other: &Tuple) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
     }
-    fn cross(&self, other: &Tuple) -> Tuple {
+    pub fn cross(&self, other: &Tuple) -> Tuple {
         vector(
             self.y * other.z - self.z * other.y,
             self.z * other.x - self.x * other.z,

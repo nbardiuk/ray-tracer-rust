@@ -1,4 +1,7 @@
-use matrices::{identity_matrix, Matrix};
+use matrices::identity_matrix;
+use matrices::matrix;
+use matrices::Matrix;
+use tuples::Tuple;
 
 pub fn translation(x: f64, y: f64, z: f64) -> Matrix {
     let mut data = identity_matrix().data;
@@ -60,9 +63,23 @@ pub fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix 
     Matrix { data }
 }
 
+pub fn view_transform(from: &Tuple, to: &Tuple, up: &Tuple) -> Matrix {
+    let forward = (to - from).normalized();
+    let left = forward.cross(&up.normalized());
+    let true_up = left.cross(&forward);
+    let orientation = matrix(&[
+        &[left.x, left.y, left.z, 0.],
+        &[true_up.x, true_up.y, true_up.z, 0.],
+        &[-forward.x, -forward.y, -forward.z, 0.],
+        &[0., 0., 0., 1.],
+    ]);
+    orientation * translation(-from.x, -from.y, -from.z)
+}
+
 #[cfg(test)]
 mod spec {
     use super::*;
+    use matrices::matrix;
     use std::f64::consts::PI;
     use tuples::{point, vector};
 
@@ -227,5 +244,57 @@ mod spec {
         let c = translation(10., 5., 7.);
 
         assert_eq!(c * b * a * p, point(15., 0., 7.));
+    }
+
+    #[test]
+    fn the_transformation_matrix_for_the_default_orientation() {
+        let from = point(0., 0., 0.);
+        let to = point(0., 0., -1.);
+        let up = point(0., 1., 0.);
+
+        let t = view_transform(&from, &to, &up);
+
+        assert_eq!(t, identity_matrix());
+    }
+
+    #[test]
+    fn a_view_transformation_matrix_looking_in_positive_z_direction() {
+        let from = point(0., 0., 0.);
+        let to = point(0., 0., 1.);
+        let up = vector(0., 1., 0.);
+
+        let t = view_transform(&from, &to, &up);
+
+        assert_eq!(t, scaling(-1., 1., -1.));
+    }
+
+    #[test]
+    fn the_view_transformation_moves_the_world() {
+        let from = point(0., 0., 8.);
+        let to = point(0., 0., 0.);
+        let up = vector(0., 1., 0.);
+
+        let t = view_transform(&from, &to, &up);
+
+        assert_eq!(t, translation(0., 0., -8.));
+    }
+
+    #[test]
+    fn an_arbitrary_view_transformation() {
+        let from = point(1., 3., 2.);
+        let to = point(4., -2., 8.);
+        let up = vector(1., 1., 0.);
+
+        let t = view_transform(&from, &to, &up);
+
+        assert_eq!(
+            t,
+            matrix(&[
+                &[-0.50709, 0.50709, 0.67612, -2.36643],
+                &[0.76772, 0.60609, 0.12122, -2.82843],
+                &[-0.35857, 0.59761, -0.71714, 0.],
+                &[0., 0., 0., 1.],
+            ])
+        );
     }
 }
