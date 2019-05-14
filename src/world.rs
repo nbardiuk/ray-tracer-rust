@@ -1,3 +1,5 @@
+use intersections::hit;
+use intersections::prepare_computations;
 use intersections::Comps;
 use intersections::Intersection;
 use lights::point_light;
@@ -55,6 +57,12 @@ impl World<Sphere> {
                     .lighting(light, &comps.point, &comps.eyev, &comps.normalv)
             })
             .fold(color(0., 0., 0.), |r, c| r + c)
+    }
+
+    pub fn color_at(self: &World<Sphere>, ray: &Ray) -> Color {
+        hit(&self.intersects(ray))
+            .map(|hit| self.shade_hit(prepare_computations(hit, ray)))
+            .unwrap_or_else(|| color(0., 0., 0.))
     }
 }
 
@@ -134,5 +142,40 @@ mod spec {
         let c = w.shade_hit(comps);
 
         assert_eq!(c, color(0.90498, 0.90498, 0.90498));
+    }
+
+    #[test]
+    fn the_color_when_a_ray_misses() {
+        let w = default_world();
+        let r = ray(point(0., 0., -5.), vector(0., 1., 0.));
+
+        let c = w.color_at(&r);
+
+        assert_eq!(c, color(0., 0., 0.));
+    }
+
+    #[test]
+    fn the_color_when_a_ray_hits() {
+        let w = default_world();
+        let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
+
+        let c = w.color_at(&r);
+
+        assert_eq!(c, color(0.38066, 0.47583, 0.2855));
+    }
+
+    #[test]
+    fn the_color_with_an_intersection_behind_the_ray() {
+        let mut w = default_world();
+        let mut outer = w.objects[0].clone();
+        outer.material.ambient = 1.;
+        let mut inner = w.objects[1].clone();
+        inner.material.ambient = 1.;
+        w.objects = vec![outer, inner];
+        let r = ray(point(0., 0., 0.75), vector(0., 0., -1.));
+
+        let c = w.color_at(&r);
+
+        assert_eq!(c, w.objects[1].material.color);
     }
 }
