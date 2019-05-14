@@ -53,7 +53,7 @@ fn main() {
                 let sphere = hit.unwrap().object;
                 let normal = sphere.normal_at(&point);
                 let eye = -ray.direction;
-                let color = sphere.material.lighting(&light, point, eye, normal);
+                let color = sphere.material.lighting(&light, &point, &eye, &normal);
                 canvas.write_pixel(x, y, color);
             }
         }

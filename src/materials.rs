@@ -24,9 +24,9 @@ impl Material {
     pub fn lighting(
         &self,
         light: &PointLight,
-        position: Tuple,
-        eye: Tuple,
-        normal: Tuple,
+        position: &Tuple,
+        eye: &Tuple,
+        normal: &Tuple,
     ) -> Color {
         // combine the surface color with the light's color/intensity
         let effective_color = &self.color * &light.intensity;
@@ -84,7 +84,7 @@ mod spec {
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, position, eyev, normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv);
         assert_eq!(result, color(1.9, 1.9, 1.9));
     }
 
@@ -96,7 +96,7 @@ mod spec {
         let eyev = vector(0., a, -a);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, position, eyev, normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv);
         assert_eq!(result, color(1., 1., 1.));
     }
 
@@ -107,7 +107,7 @@ mod spec {
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 10., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, position, eyev, normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv);
         assert_eq!(result, color(0.7364, 0.7364, 0.7364));
     }
 
@@ -119,7 +119,7 @@ mod spec {
         let eyev = vector(0., -a, -a);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 10., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, position, eyev, normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv);
         assert_eq!(result, color(1.6364, 1.6364, 1.6364));
     }
 
@@ -130,7 +130,7 @@ mod spec {
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 0., 10.), color(1., 1., 1.));
-        let result = m.lighting(&light, position, eyev, normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv);
         assert_eq!(result, color(0.1, 0.1, 0.1));
     }
 }

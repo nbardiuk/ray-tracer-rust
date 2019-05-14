@@ -12,13 +12,13 @@ use tuples::Color;
 
 pub struct World<T> {
     objects: Vec<T>,
-    light_source: Option<PointLight>,
+    light_sources: Vec<PointLight>,
 }
 
 pub fn world() -> World<Sphere> {
     World {
         objects: vec![],
-        light_source: None,
+        light_sources: vec![],
     }
 }
 fn default_world() -> World<Sphere> {
@@ -30,7 +30,7 @@ fn default_world() -> World<Sphere> {
     s2.transform = scaling(0.5, 0.5, 0.5);
     World {
         objects: vec![s1, s2],
-        light_source: Some(point_light(point(-10., 10., -10.), color(1., 1., 1.))),
+        light_sources: vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))],
     }
 }
 
@@ -46,15 +46,15 @@ impl World<Sphere> {
     }
 
     pub fn shade_hit<'a>(self: &World<Sphere>, comps: Comps<'a, Sphere>) -> Color {
-        match &self.light_source {
-            Some(light) => {
+        self.light_sources
+            .iter()
+            .map(|light| {
                 comps
                     .object
                     .material
-                    .lighting(light, comps.point, comps.eyev, comps.normalv)
-            }
-            None => color(0., 0., 0.),
-        }
+                    .lighting(light, &comps.point, &comps.eyev, &comps.normalv)
+            })
+            .fold(color(0., 0., 0.), |r, c| r + c)
     }
 }
 
@@ -75,7 +75,7 @@ mod spec {
     fn creating_a_world() {
         let w = world();
         assert_eq!(w.objects, vec!());
-        assert_eq!(w.light_source, None);
+        assert_eq!(w.light_sources, vec!());
     }
 
     #[test]
@@ -90,7 +90,7 @@ mod spec {
 
         let w = default_world();
 
-        assert_eq!(w.light_source, Some(light));
+        assert_eq!(w.light_sources, vec!(light));
         assert!(w.objects.contains(&s1));
         assert!(w.objects.contains(&s2));
     }
@@ -125,7 +125,7 @@ mod spec {
     #[test]
     fn shading_an_intersection_from_the_inside() {
         let mut w = default_world();
-        w.light_source = Some(point_light(point(0., 0.25, 0.), color(1., 1., 1.)));
+        w.light_sources = vec![point_light(point(0., 0.25, 0.), color(1., 1., 1.))];
         let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
         let shape = &w.objects[1];
         let i = intersection(0.5, shape);
