@@ -15,54 +15,70 @@ mod world;
 #[macro_use]
 extern crate hamcrest2;
 
-use canvas::canvas;
-use intersections::hit;
-use intersections::Object;
+use camera::camera;
 use lights::point_light;
 use materials::material;
-use rays::ray;
 use spheres::sphere;
+use std::f64::consts::PI;
 use std::fs;
 use transformations::*;
-use tuples::{color, point};
+use tuples::{color, point, vector};
+use world::world;
 
 fn main() {
-    let wall_z = 10.;
-    let wall_size = 7.;
-    let canvas_pixels = 200;
-    let pixel_size = wall_size / canvas_pixels as f64;
-    let half = wall_size / 2.;
+    let mut floor = sphere();
+    floor.transform = scaling(10., 0.01, 10.);
+    floor.material = material();
+    floor.material.color = color(1., 0.9, 0.9);
+    floor.material.specular = 0.;
 
-    let mut sphere = sphere();
-    sphere.transform = shearing(1., 0., 0., 0., 0., 0.) * scaling(0.5, 1., 1.);
-    sphere.material = material();
-    sphere.material.color = color(0., 1., 1.);
+    let mut left_wall = sphere();
+    left_wall.transform = translation(0., 0., 5.)
+        * rotation_y(-PI / 4.)
+        * rotation_x(PI / 2.)
+        * scaling(10., 0.01, 10.);
+    left_wall.material = floor.material.clone();
 
-    let ray_origin = point(0., 0., -5.);
+    let mut right_wall = sphere();
+    right_wall.transform = translation(0., 0., 5.)
+        * rotation_y(PI / 4.)
+        * rotation_x(PI / 2.)
+        * scaling(10., 0.01, 10.);
+    right_wall.material = floor.material.clone();
 
-    let light_position = point(-10., 10., -10.);
-    let ligth_color = color(1., 1., 1.);
-    let light = point_light(light_position, ligth_color);
+    let mut middle = sphere();
+    middle.transform = translation(-0.5, 1., 0.5);
+    middle.material = material();
+    middle.material.color = color(0.1, 1., 0.5);
+    middle.material.diffuse = 0.7;
+    middle.material.specular = 0.3;
 
-    let mut canvas = canvas(canvas_pixels, canvas_pixels);
-    for y in 0..canvas_pixels {
-        let world_y = half - pixel_size * y as f64;
-        for x in 0..canvas_pixels {
-            let world_x = half - pixel_size * x as f64;
-            let position = point(world_x, world_y, wall_z);
-            let ray = ray(ray_origin.clone(), (&position - &ray_origin).normalized());
-            let intersects = sphere.intersects(&ray);
-            let hit = hit(&intersects);
-            if hit.is_some() {
-                let point = ray.position(hit.unwrap().t);
-                let sphere = hit.unwrap().object;
-                let normal = sphere.normal_at(&point);
-                let eye = -ray.direction;
-                let color = sphere.material.lighting(&light, &point, &eye, &normal);
-                canvas.write_pixel(x, y, color);
-            }
-        }
-    }
+    let mut right = sphere();
+    right.transform = translation(1.5, 0.5, -0.5) * scaling(0.5, 0.5, 0.5);
+    right.material = material();
+    right.material.color = color(0.5, 1., 0.1);
+    right.material.diffuse = 0.7;
+    right.material.specular = 0.3;
+
+    let mut left = sphere();
+    left.transform = translation(-1.5, 0.33, -0.75) * scaling(0.33, 0.33, 0.33);
+    left.material = material();
+    left.material.color = color(1., 0.8, 0.1);
+    left.material.diffuse = 0.7;
+    left.material.specular = 0.3;
+
+    let mut world = world();
+    world.objects = vec![floor, left_wall, right_wall, middle, left, right];
+    world.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
+
+    let mut camera = camera(400, 200, PI / 3.);
+    camera.transform = view_transform(
+        &point(0., 1.5, -5.),
+        &point(0., 1., 0.),
+        &vector(0., 1., 0.),
+    );
+
+    let canvas = camera.render(world);
 
     fs::write("./canvas.ppm", canvas.to_ppm()).expect("Unable to write file");
 }

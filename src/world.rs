@@ -13,8 +13,8 @@ use tuples::point;
 use tuples::Color;
 
 pub struct World<T> {
-    objects: Vec<T>,
-    light_sources: Vec<PointLight>,
+    pub objects: Vec<T>,
+    pub light_sources: Vec<PointLight>,
 }
 
 pub fn world() -> World<Sphere> {

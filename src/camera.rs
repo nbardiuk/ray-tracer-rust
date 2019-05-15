@@ -12,7 +12,7 @@ pub struct Camera {
     hsize: usize,
     vsize: usize,
     field_of_view: f64,
-    transform: Matrix,
+    pub transform: Matrix,
     pixel_size: f64,
     half_width: f64,
     half_height: f64,
@@ -64,7 +64,7 @@ impl Camera {
         ray(origin, direction)
     }
 
-    fn render(self: &Camera, world: World<Sphere>) -> Canvas {
+    pub fn render(self: &Camera, world: World<Sphere>) -> Canvas {
         let mut canvas = canvas(self.hsize, self.vsize);
         for x in 0..canvas.width {
             for y in 0..canvas.height {
