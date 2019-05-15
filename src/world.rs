@@ -1,6 +1,7 @@
 use intersections::hit;
 use intersections::Comps;
 use intersections::Intersection;
+use intersections::Object;
 use lights::point_light;
 use lights::PointLight;
 use rays::Ray;
@@ -35,9 +36,9 @@ pub fn default_world() -> World<Sphere> {
     }
 }
 
-impl World<Sphere> {
-    fn intersects<'a>(self: &'a World<Sphere>, inray: &Ray) -> Vec<Intersection<'a, Sphere>> {
-        let mut xs: Vec<Intersection<'a, Sphere>> = self
+impl<T: Object> World<T> {
+    fn intersects<'a>(self: &'a World<T>, inray: &Ray) -> Vec<Intersection<'a, T>> {
+        let mut xs: Vec<Intersection<'a, T>> = self
             .objects
             .iter()
             .flat_map(|sphere| sphere.intersects(inray))
@@ -45,7 +46,9 @@ impl World<Sphere> {
         xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
         xs
     }
+}
 
+impl World<Sphere> {
     fn shade_hit<'a>(self: &World<Sphere>, comps: Comps<'a, Sphere>) -> Color {
         self.light_sources
             .iter()

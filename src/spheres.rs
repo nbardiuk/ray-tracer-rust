@@ -17,8 +17,8 @@ pub fn sphere() -> Sphere {
     }
 }
 
-impl Sphere {
-    pub fn intersects<'a>(self: &'a Sphere, inray: &Ray) -> Vec<Intersection<'a, Sphere>> {
+impl Object for Sphere {
+    fn intersects<'a>(&'a self, inray: &Ray) -> Vec<Intersection<'a, Sphere>> {
         let ray = inray.transform(self.transform.inverse());
         let sphere_to_ray = ray.origin - point(0., 0., 0.);
 
@@ -36,9 +36,7 @@ impl Sphere {
             )
         }
     }
-}
 
-impl Object for Sphere {
     fn normal_at(&self, world_point: &Tuple) -> Tuple {
         let object_point = &self.transform.inverse() * world_point;
         let object_normal = object_point - point(0., 0., 0.);

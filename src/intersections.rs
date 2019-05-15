@@ -1,8 +1,9 @@
 use rays::Ray;
 use tuples::Tuple;
 
-pub trait Object {
+pub trait Object: Sized {
     fn normal_at(&self, world_point: &Tuple) -> Tuple;
+    fn intersects<'a>(&'a self, inray: &Ray) -> Vec<Intersection<'a, Self>>;
 }
 
 #[derive(Debug, PartialEq)]
