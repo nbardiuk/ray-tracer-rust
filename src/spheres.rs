@@ -18,6 +18,10 @@ pub fn sphere() -> Sphere {
 }
 
 impl Object for Sphere {
+    fn material(&self) -> &Material {
+        &self.material
+    }
+
     fn intersects<'a>(&'a self, inray: &Ray) -> Vec<Intersection<'a, Sphere>> {
         let ray = inray.transform(self.transform.inverse());
         let sphere_to_ray = ray.origin - point(0., 0., 0.);

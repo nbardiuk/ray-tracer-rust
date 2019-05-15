@@ -17,7 +17,7 @@ pub struct World<T> {
     pub light_sources: Vec<PointLight>,
 }
 
-pub fn world() -> World<Sphere> {
+pub fn world<T:Object>() -> World<T> {
     World {
         objects: vec![],
         light_sources: vec![],
@@ -41,27 +41,25 @@ impl<T: Object> World<T> {
         let mut xs: Vec<Intersection<'a, T>> = self
             .objects
             .iter()
-            .flat_map(|sphere| sphere.intersects(inray))
+            .flat_map(|object| object.intersects(inray))
             .collect();
         xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
         xs
     }
-}
 
-impl World<Sphere> {
-    fn shade_hit<'a>(self: &World<Sphere>, comps: Comps<'a, Sphere>) -> Color {
+    fn shade_hit<'a>(self: &World<T>, comps: Comps<'a, T>) -> Color {
         self.light_sources
             .iter()
             .map(|light| {
                 comps
                     .object
-                    .material
+                    .material()
                     .lighting(light, &comps.point, &comps.eyev, &comps.normalv)
             })
-            .fold(color(0., 0., 0.), |r, c| r + c)
+            .fold(color(0., 0., 0.), |acc, color| acc + color)
     }
 
-    pub fn color_at(self: &World<Sphere>, ray: &Ray) -> Color {
+    pub fn color_at(self: &World<T>, ray: &Ray) -> Color {
         hit(&self.intersects(ray))
             .map(|hit| self.shade_hit(hit.prepare_computations(ray)))
             .unwrap_or_else(|| color(0., 0., 0.))
@@ -82,7 +80,7 @@ mod spec {
 
     #[test]
     fn creating_a_world() {
-        let w = world();
+        let w:World<Sphere> = world();
         assert_eq!(w.objects, vec!());
         assert_eq!(w.light_sources, vec!());
     }

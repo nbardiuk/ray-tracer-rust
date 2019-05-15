@@ -1,9 +1,11 @@
+use materials::Material;
 use rays::Ray;
 use tuples::Tuple;
 
 pub trait Object: Sized {
     fn normal_at(&self, world_point: &Tuple) -> Tuple;
     fn intersects<'a>(&'a self, inray: &Ray) -> Vec<Intersection<'a, Self>>;
+    fn material(&self) -> &Material;
 }
 
 #[derive(Debug, PartialEq)]
