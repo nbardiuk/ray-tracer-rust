@@ -1,3 +1,4 @@
+mod camera;
 mod canvas;
 mod intersections;
 mod lights;
@@ -9,6 +10,10 @@ mod spheres;
 mod transformations;
 mod tuples;
 mod world;
+
+#[cfg(test)]
+#[macro_use]
+extern crate hamcrest2;
 
 use canvas::canvas;
 use intersections::hit;

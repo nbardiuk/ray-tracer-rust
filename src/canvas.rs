@@ -20,7 +20,7 @@ impl Canvas {
         self.pixels[i] = c;
     }
 
-    fn pixel_at(&self, x: usize, y: usize) -> Color {
+    pub fn pixel_at(&self, x: usize, y: usize) -> Color {
         let i = self.width * y + x;
         self.pixels[i].clone()
     }

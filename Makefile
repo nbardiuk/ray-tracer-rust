@@ -9,6 +9,10 @@ render:
 test:
 	cargo test
 
+.PHONY: tdd
+tdd:
+	cargo watch -x test
+
 .PHONY: clean
 clean:
 	cargo clean

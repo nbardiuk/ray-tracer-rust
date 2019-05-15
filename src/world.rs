@@ -23,7 +23,7 @@ pub fn world() -> World<Sphere> {
         light_sources: vec![],
     }
 }
-fn default_world() -> World<Sphere> {
+pub fn default_world() -> World<Sphere> {
     let mut s1 = sphere();
     s1.material.color = color(0.8, 1., 0.6);
     s1.material.diffuse = 0.7;
