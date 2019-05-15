@@ -1,5 +1,4 @@
 use intersections::hit;
-use intersections::prepare_computations;
 use intersections::Comps;
 use intersections::Intersection;
 use lights::point_light;
@@ -37,7 +36,7 @@ pub fn default_world() -> World<Sphere> {
 }
 
 impl World<Sphere> {
-    pub fn intersects<'a>(self: &'a World<Sphere>, inray: &Ray) -> Vec<Intersection<'a, Sphere>> {
+    fn intersects<'a>(self: &'a World<Sphere>, inray: &Ray) -> Vec<Intersection<'a, Sphere>> {
         let mut xs: Vec<Intersection<'a, Sphere>> = self
             .objects
             .iter()
@@ -47,7 +46,7 @@ impl World<Sphere> {
         xs
     }
 
-    pub fn shade_hit<'a>(self: &World<Sphere>, comps: Comps<'a, Sphere>) -> Color {
+    fn shade_hit<'a>(self: &World<Sphere>, comps: Comps<'a, Sphere>) -> Color {
         self.light_sources
             .iter()
             .map(|light| {
@@ -61,7 +60,7 @@ impl World<Sphere> {
 
     pub fn color_at(self: &World<Sphere>, ray: &Ray) -> Color {
         hit(&self.intersects(ray))
-            .map(|hit| self.shade_hit(prepare_computations(hit, ray)))
+            .map(|hit| self.shade_hit(hit.prepare_computations(ray)))
             .unwrap_or_else(|| color(0., 0., 0.))
     }
 }
@@ -70,7 +69,6 @@ impl World<Sphere> {
 mod spec {
     use super::*;
     use intersections::intersection;
-    use intersections::prepare_computations;
     use lights::point_light;
     use rays::ray;
     use spheres::sphere;
@@ -124,7 +122,7 @@ mod spec {
         let shape = &w.objects[0];
         let i = intersection(4., shape);
 
-        let comps = prepare_computations(&i, &r);
+        let comps = i.prepare_computations(&r);
         let c = w.shade_hit(comps);
 
         assert_eq!(c, color(0.38066, 0.47583, 0.2855));
@@ -138,7 +136,7 @@ mod spec {
         let shape = &w.objects[1];
         let i = intersection(0.5, shape);
 
-        let comps = prepare_computations(&i, &r);
+        let comps = i.prepare_computations(&r);
         let c = w.shade_hit(comps);
 
         assert_eq!(c, color(0.90498, 0.90498, 0.90498));

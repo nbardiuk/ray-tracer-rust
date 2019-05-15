@@ -37,18 +37,20 @@ pub struct Comps<'a, T: Object> {
     pub inside: bool,
 }
 
-pub fn prepare_computations<'a, T: Object>(i: &Intersection<'a, T>, r: &Ray) -> Comps<'a, T> {
-    let point = r.position(i.t);
-    let normalv = i.object.normal_at(&point);
-    let eyev = -(&r.direction);
-    let inside = normalv.dot(&eyev) < 0.;
-    Comps {
-        t: i.t,
-        object: i.object,
-        point,
-        eyev,
-        normalv: if inside { -normalv } else { normalv },
-        inside,
+impl<'a, T: Object> Intersection<'a, T> {
+    pub fn prepare_computations(self: &Self, r: &Ray) -> Comps<'a, T> {
+        let point = r.position(self.t);
+        let normalv = self.object.normal_at(&point);
+        let eyev = -(&r.direction);
+        let inside = normalv.dot(&eyev) < 0.;
+        Comps {
+            t: self.t,
+            object: self.object,
+            point,
+            eyev,
+            normalv: if inside { -normalv } else { normalv },
+            inside,
+        }
     }
 }
 
@@ -129,7 +131,7 @@ mod spec {
         let shape = sphere();
         let i = intersection(4., &shape);
 
-        let comps = prepare_computations(&i, &r);
+        let comps = i.prepare_computations(&r);
 
         assert_eq!(comps.t, i.t);
         assert_eq!(comps.object, i.object);
@@ -144,7 +146,7 @@ mod spec {
         let shape = sphere();
         let i = intersection(4., &shape);
 
-        let comps = prepare_computations(&i, &r);
+        let comps = i.prepare_computations(&r);
 
         assert_eq!(comps.inside, false);
     }
@@ -155,7 +157,7 @@ mod spec {
         let shape = sphere();
         let i = intersection(1., &shape);
 
-        let comps = prepare_computations(&i, &r);
+        let comps = i.prepare_computations(&r);
 
         assert_eq!(comps.inside, true);
         assert_eq!(comps.point, point(0., 0., 1.));
