@@ -11,7 +11,6 @@ use world::World;
 pub struct Camera {
     hsize: usize,
     vsize: usize,
-    field_of_view: f64,
     pub transform: Matrix,
     pixel_size: f64,
     half_width: f64,
@@ -34,7 +33,6 @@ pub fn camera(hsize: usize, vsize: usize, field_of_view: f64) -> Camera {
     Camera {
         hsize,
         vsize,
-        field_of_view,
         transform: identity_matrix(),
         pixel_size: half_width * 2. / hsize as f64,
         half_height,
@@ -102,7 +100,6 @@ mod spec {
 
         assert_eq!(c.hsize, 160);
         assert_eq!(c.vsize, 120);
-        assert_eq!(c.field_of_view, PI / 2.0);
         assert_eq!(c.transform, identity_matrix());
     }
 
