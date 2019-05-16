@@ -6,6 +6,7 @@ mod materials;
 mod matrices;
 mod ppm;
 mod rays;
+mod shapes;
 mod spheres;
 mod transformations;
 mod tuples;

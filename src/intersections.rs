@@ -1,14 +1,8 @@
-use materials::Material;
 use rays::Ray;
 use tuples::Tuple;
+use shapes::Shape;
 
 const EPSILON: f64 = 1e-10;
-
-pub trait Shape: Sized {
-    fn normal_at(&self, world_point: &Tuple) -> Tuple;
-    fn intersects<'a>(&'a self, inray: &Ray) -> Vec<Intersection<'a, Self>>;
-    fn material(&self) -> &Material;
-}
 
 #[derive(Debug, PartialEq)]
 pub struct Intersection<'a, T: Shape> {

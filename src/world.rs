@@ -1,11 +1,11 @@
 use intersections::hit;
 use intersections::Comps;
 use intersections::Intersection;
-use intersections::Shape;
 use lights::point_light;
 use lights::PointLight;
 use rays::ray;
 use rays::Ray;
+use shapes::Shape;
 use spheres::sphere;
 use spheres::Sphere;
 use transformations::scaling;
