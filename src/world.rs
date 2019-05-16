@@ -1,7 +1,7 @@
 use intersections::hit;
 use intersections::Comps;
 use intersections::Intersection;
-use intersections::Object;
+use intersections::Shape;
 use lights::point_light;
 use lights::PointLight;
 use rays::ray;
@@ -19,7 +19,7 @@ pub struct World<T> {
     pub light_sources: Vec<PointLight>,
 }
 
-pub fn world<T: Object>() -> World<T> {
+pub fn world<T: Shape>() -> World<T> {
     World {
         objects: vec![],
         light_sources: vec![],
@@ -38,7 +38,7 @@ pub fn default_world() -> World<Sphere> {
     }
 }
 
-impl<T: Object> World<T> {
+impl<T: Shape> World<T> {
     fn intersects<'a>(&'a self, inray: &Ray) -> Vec<Intersection<'a, T>> {
         let mut xs: Vec<Intersection<'a, T>> = self
             .objects

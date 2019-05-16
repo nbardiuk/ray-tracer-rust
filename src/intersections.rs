@@ -4,36 +4,36 @@ use tuples::Tuple;
 
 const EPSILON: f64 = 1e-10;
 
-pub trait Object: Sized {
+pub trait Shape: Sized {
     fn normal_at(&self, world_point: &Tuple) -> Tuple;
     fn intersects<'a>(&'a self, inray: &Ray) -> Vec<Intersection<'a, Self>>;
     fn material(&self) -> &Material;
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Intersection<'a, T: Object> {
+pub struct Intersection<'a, T: Shape> {
     pub t: f64,
     pub object: &'a T,
 }
 
-pub fn intersection<'a, T: Object>(t: f64, object: &'a T) -> Intersection<'a, T> {
+pub fn intersection<'a, T: Shape>(t: f64, object: &'a T) -> Intersection<'a, T> {
     Intersection { t, object }
 }
 
-pub fn intersections<'a, T: Object>(
+pub fn intersections<'a, T: Shape>(
     a: Intersection<'a, T>,
     b: Intersection<'a, T>,
 ) -> Vec<Intersection<'a, T>> {
     vec![a, b]
 }
 
-pub fn hit<'a, T: Object>(xs: &'a Vec<Intersection<'a, T>>) -> Option<&'a Intersection<'a, T>> {
+pub fn hit<'a, T: Shape>(xs: &'a Vec<Intersection<'a, T>>) -> Option<&'a Intersection<'a, T>> {
     xs.iter()
         .filter(|x| x.t >= 0.)
         .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
 }
 
-pub struct Comps<'a, T: Object> {
+pub struct Comps<'a, T: Shape> {
     pub t: f64,
     pub object: &'a T,
     pub point: Tuple,
@@ -43,7 +43,7 @@ pub struct Comps<'a, T: Object> {
     pub inside: bool,
 }
 
-impl<'a, T: Object> Intersection<'a, T> {
+impl<'a, T: Shape> Intersection<'a, T> {
     pub fn prepare_computations(self: &Self, r: &Ray) -> Comps<'a, T> {
         let point = r.position(self.t);
         let normalv = self.object.normal_at(&point);

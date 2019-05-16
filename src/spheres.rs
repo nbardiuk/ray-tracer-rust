@@ -1,4 +1,4 @@
-use intersections::{intersection, intersections, Intersection, Object};
+use intersections::{intersection, intersections, Intersection, Shape};
 use materials::{material, Material};
 use matrices::{identity_matrix, Matrix};
 use rays::Ray;
@@ -17,7 +17,7 @@ pub fn sphere() -> Sphere {
     }
 }
 
-impl Object for Sphere {
+impl Shape for Sphere {
     fn material(&self) -> &Material {
         &self.material
     }
