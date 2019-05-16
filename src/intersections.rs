@@ -2,6 +2,8 @@ use materials::Material;
 use rays::Ray;
 use tuples::Tuple;
 
+const EPSILON: f64 = 1e-10;
+
 pub trait Object: Sized {
     fn normal_at(&self, world_point: &Tuple) -> Tuple;
     fn intersects<'a>(&'a self, inray: &Ray) -> Vec<Intersection<'a, Self>>;
@@ -35,6 +37,7 @@ pub struct Comps<'a, T: Object> {
     pub t: f64,
     pub object: &'a T,
     pub point: Tuple,
+    pub over_point: Tuple,
     pub eyev: Tuple,
     pub normalv: Tuple,
     pub inside: bool,
@@ -46,12 +49,15 @@ impl<'a, T: Object> Intersection<'a, T> {
         let normalv = self.object.normal_at(&point);
         let eyev = -(&r.direction);
         let inside = normalv.dot(&eyev) < 0.;
+        let normalv = if inside { -normalv } else { normalv };
+        let over_point = &point + &normalv * EPSILON;
         Comps {
             t: self.t,
             object: self.object,
             point,
+            over_point,
             eyev,
-            normalv: if inside { -normalv } else { normalv },
+            normalv,
             inside,
         }
     }
@@ -60,8 +66,10 @@ impl<'a, T: Object> Intersection<'a, T> {
 #[cfg(test)]
 mod spec {
     use super::*;
+    use hamcrest2::prelude::*;
     use rays::ray;
     use spheres::sphere;
+    use transformations::translation;
     use tuples::point;
     use tuples::vector;
 
@@ -166,5 +174,18 @@ mod spec {
         assert_eq!(comps.point, point(0., 0., 1.));
         assert_eq!(comps.eyev, vector(0., 0., -1.));
         assert_eq!(comps.normalv, vector(0., 0., -1.));
+    }
+
+    #[test]
+    fn the_hit_should_offset_the_point() {
+        let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
+        let mut shape = sphere();
+        shape.transform = translation(0., 0., 1.);
+        let i = intersection(5., &shape);
+
+        let comps = i.prepare_computations(&r);
+
+        assert_that!(comps.over_point.z, lt(-EPSILON / 2.));
+        assert_that!(comps.point.z, gt(comps.over_point.z));
     }
 }

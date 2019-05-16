@@ -27,6 +27,7 @@ impl Material {
         position: &Tuple,
         eye: &Tuple,
         normal: &Tuple,
+        in_shadow: bool,
     ) -> Color {
         // combine the surface color with the light's color/intensity
         let effective_color = &self.color * &light.intensity;
@@ -41,7 +42,7 @@ impl Material {
         //normal vector. A negative number means the light is on the other side of the surface.
         let light_dot_normal = lightv.dot(&normal);
         let black = color(0.0, 0.0, 0.0);
-        let diffuse = if light_dot_normal < 0. {
+        let diffuse = if light_dot_normal < 0. || in_shadow {
             black.clone()
         } else {
             effective_color * self.diffuse * light_dot_normal
@@ -50,7 +51,7 @@ impl Material {
         //relfect dot eye represents the cosine of the angle between the reflectin vector and the
         //eye vector. A negative number means the light reflects away from the eye.
         let reflect_dot_eye = reflectv.dot(&eye);
-        let specular = if reflect_dot_eye <= 0. {
+        let specular = if reflect_dot_eye <= 0. || in_shadow {
             black
         } else {
             let factor = reflect_dot_eye.powf(self.shininess);
@@ -64,6 +65,7 @@ impl Material {
 #[cfg(test)]
 mod spec {
     use super::*;
+    use hamcrest2::prelude::*;
     use lights::point_light;
     use tuples::{color, point, vector};
 
@@ -84,7 +86,7 @@ mod spec {
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, &position, &eyev, &normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv, false);
         assert_eq!(result, color(1.9, 1.9, 1.9));
     }
 
@@ -96,7 +98,7 @@ mod spec {
         let eyev = vector(0., a, -a);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, &position, &eyev, &normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv, false);
         assert_eq!(result, color(1., 1., 1.));
     }
 
@@ -107,7 +109,7 @@ mod spec {
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 10., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, &position, &eyev, &normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv, false);
         assert_eq!(result, color(0.7364, 0.7364, 0.7364));
     }
 
@@ -119,7 +121,7 @@ mod spec {
         let eyev = vector(0., -a, -a);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 10., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, &position, &eyev, &normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv, false);
         assert_eq!(result, color(1.6364, 1.6364, 1.6364));
     }
 
@@ -130,7 +132,21 @@ mod spec {
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 0., 10.), color(1., 1., 1.));
-        let result = m.lighting(&light, &position, &eyev, &normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv, false);
         assert_eq!(result, color(0.1, 0.1, 0.1));
+    }
+
+    #[test]
+    fn lighting_with_the_surface_in_shadow() {
+        let m = material();
+        let position = point(0., 0., 0.);
+        let eyev = vector(0., 0., -1.);
+        let normalv = vector(0., 0., -1.);
+        let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
+        let in_shadow = true;
+
+        let result = m.lighting(&light, &position, &eyev, &normalv, in_shadow);
+
+        assert_that!(result, eq(color(0.1, 0.1, 0.1)));
     }
 }
