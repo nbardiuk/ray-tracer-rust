@@ -90,7 +90,7 @@ mod spec {
     use tuples::color;
     use tuples::point;
     use tuples::vector;
-    use world::default_world;
+    use world::spec::default_world;
 
     #[test]
     fn constructing_a_camera() {

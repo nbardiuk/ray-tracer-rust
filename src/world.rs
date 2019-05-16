@@ -1,16 +1,11 @@
 use intersections::hit;
 use intersections::Comps;
 use intersections::Intersection;
-use lights::point_light;
 use lights::PointLight;
 use rays::ray;
 use rays::Ray;
 use shapes::Shape;
-use spheres::sphere;
-use spheres::Sphere;
-use transformations::scaling;
 use tuples::color;
-use tuples::point;
 use tuples::Color;
 use tuples::Tuple;
 
@@ -23,18 +18,6 @@ pub fn world<T: Shape>() -> World<T> {
     World {
         objects: vec![],
         light_sources: vec![],
-    }
-}
-pub fn default_world() -> World<Sphere> {
-    let mut s1 = sphere();
-    s1.material.color = color(0.8, 1., 0.6);
-    s1.material.diffuse = 0.7;
-    s1.material.specular = 0.2;
-    let mut s2 = sphere();
-    s2.transform = scaling(0.5, 0.5, 0.5);
-    World {
-        objects: vec![s1, s2],
-        light_sources: vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))],
     }
 }
 
@@ -81,18 +64,32 @@ impl<T: Shape> World<T> {
 }
 
 #[cfg(test)]
-mod spec {
+pub mod spec {
     use super::*;
     use hamcrest2::prelude::*;
     use intersections::intersection;
     use lights::point_light;
     use rays::ray;
     use spheres::sphere;
+    use spheres::Sphere;
     use transformations::scaling;
     use transformations::translation;
     use tuples::color;
     use tuples::point;
     use tuples::vector;
+
+    pub fn default_world() -> World<Sphere> {
+        let mut s1 = sphere();
+        s1.material.color = color(0.8, 1., 0.6);
+        s1.material.diffuse = 0.7;
+        s1.material.specular = 0.2;
+        let mut s2 = sphere();
+        s2.transform = scaling(0.5, 0.5, 0.5);
+        World {
+            objects: vec![s1, s2],
+            light_sources: vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))],
+        }
+    }
 
     #[test]
     fn creating_a_world() {
