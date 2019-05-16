@@ -19,16 +19,20 @@ impl Shape for Sphere {
     fn material(&self) -> &Material {
         &self.material
     }
-
+    fn set_material(&mut self, material: Material) {
+        self.material = material;
+    }
     fn transform(&self) -> &Matrix {
         &self.transform
+    }
+    fn set_transform(&mut self, transform: Matrix) {
+        self.transform = transform;
     }
 }
 
 #[cfg(test)]
 mod spec {
     use super::*;
-    use materials::material;
     use matrices::identity_matrix;
     use rays::ray;
     use std::f64::consts::PI;
@@ -198,23 +202,5 @@ mod spec {
         let n = s.normal_at(&point(0., a, -a));
 
         assert_eq!(n, vector(0., 0.97014, -0.24254));
-    }
-
-    #[test]
-    fn a_sphere_has_a_default_material() {
-        let s = sphere();
-        let m = s.material;
-        assert_eq!(m, material());
-    }
-
-    #[test]
-    fn a_sphere_may_be_assigned_a_material() {
-        let mut m = material();
-        m.ambient = 1.;
-
-        let mut s = sphere();
-        s.material = m.clone();
-
-        assert_eq!(s.material, m);
     }
 }
