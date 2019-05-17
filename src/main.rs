@@ -4,6 +4,7 @@ mod intersections;
 mod lights;
 mod materials;
 mod matrices;
+mod planes;
 mod ppm;
 mod rays;
 mod shapes;

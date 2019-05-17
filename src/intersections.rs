@@ -2,7 +2,7 @@ use rays::Ray;
 use tuples::Tuple;
 use shapes::Shape;
 
-const EPSILON: f64 = 1e-10;
+pub const EPSILON: f64 = 1e-10;
 
 #[derive(Debug, PartialEq)]
 pub struct Intersection<'a, T: Shape> {

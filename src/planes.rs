@@ -1,0 +1,115 @@
+use intersections::intersection;
+use intersections::Intersection;
+use intersections::EPSILON;
+use materials::material;
+use materials::Material;
+use matrices::identity_matrix;
+use matrices::Matrix;
+use rays::Ray;
+use shapes::Shape;
+use tuples::vector;
+use tuples::Tuple;
+
+// a xz plane with normal pointing in the positive y direction
+
+#[derive(Debug, PartialEq)]
+pub struct Plane {
+    transform: Matrix,
+    material: Material,
+}
+
+impl Shape for Plane {
+    fn material(&self) -> &Material {
+        &self.material
+    }
+    fn set_material(&mut self, material: Material) {
+        self.material = material;
+    }
+    fn transform(&self) -> &Matrix {
+        &self.transform
+    }
+    fn set_transform(&mut self, transform: Matrix) {
+        self.transform = transform;
+    }
+    fn local_normal_at(&self, local_point: Tuple) -> Tuple {
+        vector(0., 1., 0.)
+    }
+    fn local_intersects<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a, Self>> {
+        if local_ray.direction.y.abs() < EPSILON {
+            vec![]
+        } else {
+            let t = -local_ray.origin.y / local_ray.direction.y;
+            vec![intersection(t, self)]
+        }
+    }
+}
+
+pub fn plane() -> Plane {
+    Plane {
+        material: material(),
+        transform: identity_matrix(),
+    }
+}
+
+#[cfg(test)]
+mod spec {
+    use super::*;
+    use rays::ray;
+    use tuples::point;
+    use tuples::vector;
+
+    #[test]
+    fn the_normal_of_a_plane_is_constant_everywhere() {
+        let p = plane();
+
+        let n1 = p.local_normal_at(point(0., 0., 0.));
+        let n2 = p.local_normal_at(point(10., 0., -10.));
+        let n3 = p.local_normal_at(point(-5., 0., 150.));
+
+        assert_eq!(n1, vector(0., 1., 0.));
+        assert_eq!(n2, vector(0., 1., 0.));
+        assert_eq!(n3, vector(0., 1., 0.));
+    }
+
+    #[test]
+    fn intersect_with_a_ray_parallel_to_the_plane() {
+        let p = plane();
+        let r = ray(point(0., 10., 0.), vector(0., 0., 1.));
+
+        let xs = p.local_intersects(r);
+
+        assert!(xs.is_empty());
+    }
+
+    #[test]
+    fn intersect_with_a_coplanar_ray() {
+        let p = plane();
+        let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
+
+        let xs = p.local_intersects(r);
+
+        assert!(xs.is_empty());
+    }
+
+    #[test]
+    fn a_ray_intersecting_a_plane_from_above() {
+        let p = plane();
+        let r = ray(point(0., 1., 0.), vector(0., -1., 0.));
+
+        let xs = p.local_intersects(r);
+
+        assert_eq!(xs.len(), 1);
+        assert_eq!(xs[0].object, &p);
+    }
+
+    #[test]
+    fn a_ray_intersecting_a_plane_from_below() {
+        let p = plane();
+        let r = ray(point(0., -1., 0.), vector(0., 1., 0.));
+
+        let xs = p.local_intersects(r);
+
+        assert_eq!(xs.len(), 1);
+        assert_eq!(xs[0].object, &p);
+    }
+}
