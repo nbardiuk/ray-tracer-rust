@@ -5,6 +5,7 @@ use materials::{material, Material};
 use matrices::{identity_matrix, Matrix};
 use rays::Ray;
 use shapes::Shape;
+use std::rc::Rc;
 use tuples::point;
 use tuples::Tuple;
 
@@ -37,7 +38,7 @@ impl Shape for Sphere {
     fn local_normal_at(&self, local_point: Tuple) -> Tuple {
         local_point - point(0., 0., 0.)
     }
-    fn local_intersects<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a, Self>> {
+    fn local_intersects(&self, rc: Rc<Shape>, local_ray: Ray) -> Vec<Intersection> {
         let shape_to_ray = local_ray.origin - point(0., 0., 0.);
 
         let a = local_ray.direction.dot(&local_ray.direction);
@@ -49,10 +50,16 @@ impl Shape for Sphere {
             vec![]
         } else {
             intersections(
-                intersection((-b - discriminant.sqrt()) / (2. * a), self),
-                intersection((-b + discriminant.sqrt()) / (2. * a), self),
+                intersection((-b - discriminant.sqrt()) / (2. * a), rc.clone()),
+                intersection((-b + discriminant.sqrt()) / (2. * a), rc.clone()),
             )
         }
+    }
+}
+
+impl PartialEq<Sphere> for Shape {
+    fn eq(&self, other: &Sphere) -> bool {
+        self.material().eq(other.material()) && self.transform().eq(other.transform())
     }
 }
 
@@ -66,9 +73,9 @@ mod spec {
     #[test]
     fn a_ray_intersects_a_sphere_at_two_points() {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
-        let s = sphere();
+        let s = Rc::new(sphere());
 
-        let xs = s.local_intersects(r);
+        let xs = s.local_intersects(s.clone(), r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 4.);
@@ -78,9 +85,9 @@ mod spec {
     #[test]
     fn a_ray_intersects_a_sphere_at_tangent() {
         let r = ray(point(0., 1., -5.), vector(0., 0., 1.));
-        let s = sphere();
+        let s = Rc::new(sphere());
 
-        let xs = s.local_intersects(r);
+        let xs = s.local_intersects(s.clone(), r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 5.);
@@ -90,9 +97,9 @@ mod spec {
     #[test]
     fn a_ray_misses_a_sphere() {
         let r = ray(point(0., 2., -5.), vector(0., 0., 1.));
-        let s = sphere();
+        let s = Rc::new(sphere());
 
-        let xs = s.local_intersects(r);
+        let xs = s.local_intersects(s.clone(), r);
 
         assert_eq!(xs.len(), 0);
     }
@@ -100,9 +107,9 @@ mod spec {
     #[test]
     fn a_ray_originates_inside_a_sphere() {
         let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
-        let s = sphere();
+        let s = Rc::new(sphere());
 
-        let xs = s.local_intersects(r);
+        let xs = s.local_intersects(s.clone(), r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -1.);
@@ -112,9 +119,9 @@ mod spec {
     #[test]
     fn a_sphere_is_behind_a_ray() {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
-        let s = sphere();
+        let s = Rc::new(sphere());
 
-        let xs = s.local_intersects(r);
+        let xs = s.local_intersects(s.clone(), r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -6.);
@@ -124,13 +131,13 @@ mod spec {
     #[test]
     fn intersect_sets_the_object_on_the_intersection() {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
-        let s = sphere();
+        let s = Rc::new(sphere());
 
-        let xs = s.local_intersects(r);
+        let xs = s.local_intersects(s.clone(), r);
 
         assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0].object, &s);
-        assert_eq!(xs[1].object, &s);
+        assert_eq!(*xs[0].object, *s);
+        assert_eq!(*xs[1].object, *s);
     }
 
     #[test]
@@ -138,8 +145,9 @@ mod spec {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let mut s = sphere();
         s.transform = scaling(2., 2., 2.);
+        let rc = Rc::new(s);
 
-        let xs = s.intersects(&r);
+        let xs = rc.intersects(rc.clone(), &r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 3.);
@@ -151,8 +159,9 @@ mod spec {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let mut s = sphere();
         s.transform = translation(5., 0., 0.);
+        let rc = Rc::new(s);
 
-        let xs = s.intersects(&r);
+        let xs = rc.intersects(rc.clone(), &r);
 
         assert_eq!(xs.len(), 0);
     }

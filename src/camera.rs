@@ -4,7 +4,6 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::ray;
 use rays::Ray;
-use spheres::Sphere;
 use tuples::point;
 use world::World;
 
@@ -62,7 +61,7 @@ impl Camera {
         ray(origin, direction)
     }
 
-    pub fn render(self: &Camera, world: World<Sphere>) -> Canvas {
+    pub fn render<'a>(self: &Camera, world: World) -> Canvas {
         let mut canvas = canvas(self.hsize, self.vsize);
         for x in 0..canvas.width {
             for y in 0..canvas.height {

@@ -2,9 +2,10 @@ use intersections::Intersection;
 use materials::Material;
 use matrices::Matrix;
 use rays::Ray;
+use std::rc::Rc;
 use tuples::Tuple;
 
-pub trait Shape: Sized {
+pub trait Shape {
     fn material(&self) -> &Material;
     fn set_material(&mut self, material: Material);
 
@@ -20,10 +21,22 @@ pub trait Shape: Sized {
         world_normal.normalized()
     }
 
-    fn local_intersects<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a, Self>>;
-    fn intersects<'a>(&'a self, inray: &Ray) -> Vec<Intersection<'a, Self>> {
+    fn local_intersects(&self, rc: Rc<Shape>, local_ray: Ray) -> Vec<Intersection>;
+    fn intersects(&self, rc: Rc<Shape>, inray: &Ray) -> Vec<Intersection> {
         let local_ray = inray.transform(self.transform().inverse());
-        self.local_intersects(local_ray)
+        self.local_intersects(rc, local_ray)
+    }
+}
+
+impl std::fmt::Debug for Shape {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Shape ({:?}, {:?})", self.material(), self.transform())
+    }
+}
+
+impl PartialEq<Shape> for Shape {
+    fn eq(&self, shape: &Shape) -> bool {
+        self.material().eq(shape.material()) && self.transform().eq(shape.transform())
     }
 }
 
@@ -42,6 +55,7 @@ mod spec {
     use tuples::point;
     use tuples::vector;
 
+    #[derive(Debug, PartialEq)]
     struct TestShape {
         transform: Matrix,
         material: Material,
@@ -59,7 +73,7 @@ mod spec {
         fn set_transform(&mut self, transform: Matrix) {
             self.transform = transform;
         }
-        fn local_intersects<'a>(&'a self, _local_ray: Ray) -> Vec<Intersection<'a, Self>> {
+        fn local_intersects(&self, _rc: Rc<Shape>, _local_ray: Ray) -> Vec<Intersection> {
             vec![]
         }
         fn local_normal_at(&self, local_point: Tuple) -> Tuple {

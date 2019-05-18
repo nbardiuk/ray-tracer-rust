@@ -7,6 +7,7 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
+use std::rc::Rc;
 use tuples::vector;
 use tuples::Tuple;
 
@@ -31,16 +32,22 @@ impl Shape for Plane {
     fn set_transform(&mut self, transform: Matrix) {
         self.transform = transform;
     }
-    fn local_normal_at(&self, local_point: Tuple) -> Tuple {
+    fn local_normal_at(&self, _local_point: Tuple) -> Tuple {
         vector(0., 1., 0.)
     }
-    fn local_intersects<'a>(&'a self, local_ray: Ray) -> Vec<Intersection<'a, Self>> {
+    fn local_intersects(&self, rc: Rc<Shape>, local_ray: Ray) -> Vec<Intersection> {
         if local_ray.direction.y.abs() < EPSILON {
             vec![]
         } else {
             let t = -local_ray.origin.y / local_ray.direction.y;
-            vec![intersection(t, self)]
+            vec![intersection(t, rc.clone())]
         }
+    }
+}
+
+impl PartialEq<Plane> for Shape {
+    fn eq(&self, other: &Plane) -> bool {
+        self.material().eq(other.material()) && self.transform().eq(other.transform())
     }
 }
 
@@ -73,43 +80,43 @@ mod spec {
 
     #[test]
     fn intersect_with_a_ray_parallel_to_the_plane() {
-        let p = plane();
+        let p = Rc::new(plane());
         let r = ray(point(0., 10., 0.), vector(0., 0., 1.));
 
-        let xs = p.local_intersects(r);
+        let xs = p.local_intersects(p.clone(), r);
 
         assert!(xs.is_empty());
     }
 
     #[test]
     fn intersect_with_a_coplanar_ray() {
-        let p = plane();
+        let p = Rc::new(plane());
         let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
 
-        let xs = p.local_intersects(r);
+        let xs = p.local_intersects(p.clone(), r);
 
         assert!(xs.is_empty());
     }
 
     #[test]
     fn a_ray_intersecting_a_plane_from_above() {
-        let p = plane();
+        let p = Rc::new(plane());
         let r = ray(point(0., 1., 0.), vector(0., -1., 0.));
 
-        let xs = p.local_intersects(r);
+        let xs = p.local_intersects(p.clone(), r);
 
         assert_eq!(xs.len(), 1);
-        assert_eq!(xs[0].object, &p);
+        assert_eq!(*xs[0].object, *p);
     }
 
     #[test]
     fn a_ray_intersecting_a_plane_from_below() {
-        let p = plane();
+        let p = Rc::new(plane());
         let r = ray(point(0., -1., 0.), vector(0., 1., 0.));
 
-        let xs = p.local_intersects(r);
+        let xs = p.local_intersects(p.clone(), r);
 
         assert_eq!(xs.len(), 1);
-        assert_eq!(xs[0].object, &p);
+        assert_eq!(*xs[0].object, *p);
     }
 }

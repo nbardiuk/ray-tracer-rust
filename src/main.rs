@@ -20,33 +20,23 @@ extern crate hamcrest2;
 use camera::camera;
 use lights::point_light;
 use materials::material;
+use planes::plane;
+use shapes::Shape;
 use spheres::sphere;
 use std::f64::consts::PI;
 use std::fs;
+use std::rc::Rc;
 use transformations::*;
 use tuples::{color, point, vector};
 use world::world;
 
 fn main() {
-    let mut floor = sphere();
-    floor.transform = scaling(10., 0.01, 10.);
-    floor.material = material();
-    floor.material.color = color(1., 0.9, 0.9);
-    floor.material.specular = 0.;
-
-    let mut left_wall = sphere();
-    left_wall.transform = translation(0., 0., 5.)
-        * rotation_y(-PI / 4.)
-        * rotation_x(PI / 2.)
-        * scaling(10., 0.01, 10.);
-    left_wall.material = floor.material.clone();
-
-    let mut right_wall = sphere();
-    right_wall.transform = translation(0., 0., 5.)
-        * rotation_y(PI / 4.)
-        * rotation_x(PI / 2.)
-        * scaling(10., 0.01, 10.);
-    right_wall.material = floor.material.clone();
+    let mut floor = plane();
+    floor.set_transform(scaling(10., 0.01, 10.));
+    let mut m = material();
+    m.color = color(1., 0.9, 0.9);
+    m.specular = 0.;
+    floor.set_material(m);
 
     let mut middle = sphere();
     middle.transform = translation(-0.5, 1., 0.5);
@@ -70,7 +60,12 @@ fn main() {
     left.material.specular = 0.3;
 
     let mut world = world();
-    world.objects = vec![floor, left_wall, right_wall, middle, left, right];
+    world.objects = vec![
+        Rc::new(floor),
+        Rc::new(middle),
+        Rc::new(left),
+        Rc::new(right),
+    ];
     world.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
 
     let mut camera = camera(400, 200, PI / 3.);

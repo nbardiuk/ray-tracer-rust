@@ -5,34 +5,35 @@ use lights::PointLight;
 use rays::ray;
 use rays::Ray;
 use shapes::Shape;
+use std::rc::Rc;
 use tuples::color;
 use tuples::Color;
 use tuples::Tuple;
 
-pub struct World<T> {
-    pub objects: Vec<T>,
+pub struct World {
+    pub objects: Vec<Rc<Shape>>,
     pub light_sources: Vec<PointLight>,
 }
 
-pub fn world<T: Shape>() -> World<T> {
+pub fn world() -> World {
     World {
         objects: vec![],
         light_sources: vec![],
     }
 }
 
-impl<T: Shape> World<T> {
-    fn intersects<'a>(&'a self, inray: &Ray) -> Vec<Intersection<'a, T>> {
-        let mut xs: Vec<Intersection<'a, T>> = self
+impl World {
+    fn intersects(&self, inray: &Ray) -> Vec<Intersection> {
+        let mut xs: Vec<Intersection> = self
             .objects
             .iter()
-            .flat_map(|object| object.intersects(inray))
+            .flat_map(|object| object.intersects(object.clone(), inray))
             .collect();
         xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
         xs
     }
 
-    fn shade_hit<'a>(&self, comps: Comps<'a, T>) -> Color {
+    fn shade_hit(&self, comps: Comps) -> Color {
         self.light_sources
             .iter()
             .map(|light| {
@@ -71,14 +72,13 @@ pub mod spec {
     use lights::point_light;
     use rays::ray;
     use spheres::sphere;
-    use spheres::Sphere;
     use transformations::scaling;
     use transformations::translation;
     use tuples::color;
     use tuples::point;
     use tuples::vector;
 
-    pub fn default_world() -> World<Sphere> {
+    pub fn default_world() -> World {
         let mut s1 = sphere();
         s1.material.color = color(0.8, 1., 0.6);
         s1.material.diffuse = 0.7;
@@ -86,15 +86,15 @@ pub mod spec {
         let mut s2 = sphere();
         s2.transform = scaling(0.5, 0.5, 0.5);
         World {
-            objects: vec![s1, s2],
+            objects: vec![Rc::new(s1), Rc::new(s2)],
             light_sources: vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))],
         }
     }
 
     #[test]
     fn creating_a_world() {
-        let w: World<Sphere> = world();
-        assert_eq!(w.objects, vec!());
+        let w: World = world();
+        assert!(w.objects.is_empty());
         assert_eq!(w.light_sources, vec!());
     }
 
@@ -107,12 +107,14 @@ pub mod spec {
         s1.material.specular = 0.2;
         let mut s2 = sphere();
         s2.transform = scaling(0.5, 0.5, 0.5);
+        let rc1 = Rc::new(s1);
+        let rc2 = Rc::new(s2);
 
         let w = default_world();
 
         assert_eq!(w.light_sources, vec!(light));
-        assert!(w.objects.contains(&s1));
-        assert!(w.objects.contains(&s2));
+        assert_eq!(*w.objects[0], *rc1);
+        assert_eq!(*w.objects[1], *rc2);
     }
 
     #[test]
@@ -133,7 +135,7 @@ pub mod spec {
     fn shading_an_intersection() {
         let w = default_world();
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
-        let shape = &w.objects[0];
+        let shape = w.objects[0].clone();
         let i = intersection(4., shape);
 
         let comps = i.prepare_computations(&r);
@@ -147,7 +149,7 @@ pub mod spec {
         let mut w = default_world();
         w.light_sources = vec![point_light(point(0., 0.25, 0.), color(1., 1., 1.))];
         let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
-        let shape = &w.objects[1];
+        let shape = w.objects[1].clone();
         let i = intersection(0.5, shape);
 
         let comps = i.prepare_computations(&r);
@@ -163,9 +165,10 @@ pub mod spec {
         let s1 = sphere();
         let mut s2 = sphere();
         s2.transform = translation(0., 0., 10.);
-        w.objects.append(&mut vec![s1, s2.clone()]);
+        let s2rc = Rc::new(s2);
+        w.objects.append(&mut vec![Rc::new(s1), s2rc.clone()]);
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
-        let i = intersection(4., &s2);
+        let i = intersection(4., s2rc.clone());
 
         let comps = i.prepare_computations(&r);
         let c = w.shade_hit(comps);
@@ -195,17 +198,22 @@ pub mod spec {
 
     #[test]
     fn the_color_with_an_intersection_behind_the_ray() {
-        let mut w = default_world();
-        let mut outer = w.objects[0].clone();
-        outer.material.ambient = 1.;
-        let mut inner = w.objects[1].clone();
-        inner.material.ambient = 1.;
-        w.objects = vec![outer, inner];
+        let mut s1 = sphere();
+        s1.material.color = color(0.8, 1., 0.6);
+        s1.material.diffuse = 0.7;
+        s1.material.specular = 0.2;
+        s1.material.ambient = 1.;
+        let mut s2 = sphere();
+        s2.transform = scaling(0.5, 0.5, 0.5);
+        s2.material.ambient = 1.;
+        let mut w = world();
+        w.objects = vec![Rc::new(s1), Rc::new(s2)];
+        w.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
         let r = ray(point(0., 0., 0.75), vector(0., 0., -1.));
 
         let c = w.color_at(&r);
 
-        assert_eq!(c, w.objects[1].material.color);
+        assert_eq!(c, w.objects[1].material().color);
     }
 
     #[test]
