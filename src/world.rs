@@ -38,6 +38,7 @@ impl World {
             .iter()
             .map(|light| {
                 comps.object.material().lighting(
+                    comps.object.clone(),
                     light,
                     &comps.over_point,
                     &comps.eyev,

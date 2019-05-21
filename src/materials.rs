@@ -1,6 +1,8 @@
 use lights::PointLight;
 use patterns::Stripe;
 use tuples::{color, Color, Tuple};
+use shapes::Shape;
+use std::rc::Rc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Material {
@@ -26,13 +28,14 @@ pub fn material() -> Material {
 impl Material {
     pub fn lighting(
         &self,
+        object: Rc<Shape>,
         light: &PointLight,
         position: &Tuple,
         eye: &Tuple,
         normal: &Tuple,
         in_shadow: bool,
     ) -> Color {
-        let pos = self.pattern.as_ref().map(|p| p.at(position));
+        let pos = self.pattern.as_ref().map(|p| p.at_object(object, position));
         let surface_color = pos.as_ref().unwrap_or(&self.color);
 
         // combine the surface color with the light's color/intensity
@@ -75,6 +78,7 @@ mod spec {
     use lights::point_light;
     use patterns::stripe_pattern;
     use tuples::{color, point, vector};
+    use spheres::sphere;
 
     #[test]
     fn the_default_material() {
@@ -89,70 +93,76 @@ mod spec {
     #[test]
     fn lighting_with_the_eye_between_light_and_the_surface() {
         let m = material();
+        let object = Rc::new(sphere());
         let position = point(0., 0., 0.);
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, &position, &eyev, &normalv, false);
+        let result = m.lighting(object, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, color(1.9, 1.9, 1.9));
     }
 
     #[test]
     fn lighting_with_the_eye_between_light_and_the_surface_eye_offset_45() {
         let m = material();
+        let object = Rc::new(sphere());
         let position = point(0., 0., 0.);
         let a = 2_f64.sqrt() / 2.;
         let eyev = vector(0., a, -a);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, &position, &eyev, &normalv, false);
+        let result = m.lighting(object, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, color(1., 1., 1.));
     }
 
     #[test]
     fn lighting_with_the_eye_opposite_surface_light_offset_45() {
         let m = material();
+        let object = Rc::new(sphere());
         let position = point(0., 0., 0.);
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 10., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, &position, &eyev, &normalv, false);
+        let result = m.lighting(object, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, color(0.7364, 0.7364, 0.7364));
     }
 
     #[test]
     fn lighting_with_the_eye_in_the_path_of_reflection_vector() {
         let m = material();
+        let object = Rc::new(sphere());
         let position = point(0., 0., 0.);
         let a = 2_f64.sqrt() / 2.;
         let eyev = vector(0., -a, -a);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 10., -10.), color(1., 1., 1.));
-        let result = m.lighting(&light, &position, &eyev, &normalv, false);
+        let result = m.lighting(object, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, color(1.6364, 1.6364, 1.6364));
     }
 
     #[test]
     fn lighting_with_the_light_behind_the_surface() {
         let m = material();
+        let object = Rc::new(sphere());
         let position = point(0., 0., 0.);
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 0., 10.), color(1., 1., 1.));
-        let result = m.lighting(&light, &position, &eyev, &normalv, false);
+        let result = m.lighting(object, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, color(0.1, 0.1, 0.1));
     }
 
     #[test]
     fn lighting_with_the_surface_in_shadow() {
         let m = material();
+        let object = Rc::new(sphere());
         let position = point(0., 0., 0.);
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
         let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
         let in_shadow = true;
 
-        let result = m.lighting(&light, &position, &eyev, &normalv, in_shadow);
+        let result = m.lighting(object, &light, &position, &eyev, &normalv, in_shadow);
 
         assert_that!(result, eq(color(0.1, 0.1, 0.1)));
     }
@@ -160,6 +170,7 @@ mod spec {
     #[test]
     fn lighting_with_a_pattern_applied() {
         let mut m = material();
+        let object = Rc::new(sphere());
         m.pattern = Some(stripe_pattern(color(1., 1., 1.), color(0., 0., 0.)));
         m.ambient = 1.;
         m.diffuse = 0.;
@@ -169,8 +180,8 @@ mod spec {
         let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
         let in_shadow = false;
 
-        let c1 = m.lighting(&light, &point(0.9, 0., 0.), &eyev, &normalv, in_shadow);
-        let c2 = m.lighting(&light, &point(1.1, 0., 0.), &eyev, &normalv, in_shadow);
+        let c1 = m.lighting(object.clone(), &light, &point(0.9, 0., 0.), &eyev, &normalv, in_shadow);
+        let c2 = m.lighting(object.clone(), &light, &point(1.1, 0., 0.), &eyev, &normalv, in_shadow);
 
         assert_that!(c1, eq(color(1., 1., 1.)));
         assert_that!(c2, eq(color(0., 0., 0.)));
