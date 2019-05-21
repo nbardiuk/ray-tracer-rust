@@ -1,4 +1,5 @@
 use lights::PointLight;
+use patterns::Stripe;
 use tuples::{color, Color, Tuple};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -8,6 +9,7 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
+    pub pattern: Option<Stripe>,
 }
 
 pub fn material() -> Material {
@@ -17,6 +19,7 @@ pub fn material() -> Material {
         diffuse: 0.9,
         specular: 0.9,
         shininess: 200.,
+        pattern: None,
     }
 }
 
@@ -29,8 +32,11 @@ impl Material {
         normal: &Tuple,
         in_shadow: bool,
     ) -> Color {
+        let pos = self.pattern.as_ref().map(|p| p.at(position));
+        let surface_color = pos.as_ref().unwrap_or(&self.color);
+
         // combine the surface color with the light's color/intensity
-        let effective_color = &self.color * &light.intensity;
+        let effective_color = surface_color * &light.intensity;
 
         // find the direction to the light sourse
         let lightv = (&light.position - position).normalized();
@@ -67,6 +73,7 @@ mod spec {
     use super::*;
     use hamcrest2::prelude::*;
     use lights::point_light;
+    use patterns::stripe_pattern;
     use tuples::{color, point, vector};
 
     #[test]
@@ -148,5 +155,24 @@ mod spec {
         let result = m.lighting(&light, &position, &eyev, &normalv, in_shadow);
 
         assert_that!(result, eq(color(0.1, 0.1, 0.1)));
+    }
+
+    #[test]
+    fn lighting_with_a_pattern_applied() {
+        let mut m = material();
+        m.pattern = Some(stripe_pattern(color(1., 1., 1.), color(0., 0., 0.)));
+        m.ambient = 1.;
+        m.diffuse = 0.;
+        m.specular = 0.;
+        let eyev = vector(0., 0., -1.);
+        let normalv = vector(0., 0., -1.);
+        let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
+        let in_shadow = false;
+
+        let c1 = m.lighting(&light, &point(0.9, 0., 0.), &eyev, &normalv, in_shadow);
+        let c2 = m.lighting(&light, &point(1.1, 0., 0.), &eyev, &normalv, in_shadow);
+
+        assert_that!(c1, eq(color(1., 1., 1.)));
+        assert_that!(c2, eq(color(0., 0., 0.)));
     }
 }
