@@ -9,7 +9,7 @@ use std::rc::Rc;
 use tuples::point;
 use tuples::Tuple;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct Sphere {
     pub transform: Matrix,
     pub material: Material,

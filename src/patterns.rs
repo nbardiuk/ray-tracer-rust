@@ -1,9 +1,32 @@
 use matrices::identity_matrix;
 use matrices::Matrix;
 use shapes::Shape;
+use std::rc::Rc;
 use tuples::Color;
 use tuples::Tuple;
-use std::rc::Rc;
+
+pub trait Pattern {
+    fn transform(&self) -> &Matrix;
+    fn at(&self, point: &Tuple) -> Color;
+
+    fn at_shape(&self, shape: Rc<Shape>, world_point: &Tuple) -> Color {
+        let shape_point = (&shape.transform().inverse()) * world_point;
+        let pattern_point = self.transform().inverse() * shape_point;
+        self.at(&pattern_point)
+    }
+}
+
+impl std::fmt::Debug for Pattern {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Pattern ({:?})", self.transform())
+    }
+}
+
+impl PartialEq<Pattern> for Pattern {
+    fn eq(&self, other: &Pattern) -> bool {
+        self.transform().eq(other.transform())
+    }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Stripe {
@@ -12,19 +35,17 @@ pub struct Stripe {
     transform: Matrix,
 }
 
-impl Stripe {
-    pub fn at(&self, point: &Tuple) -> Color {
+impl Pattern for Stripe {
+    fn transform(&self) -> &Matrix {
+        &self.transform
+    }
+
+    fn at(&self, point: &Tuple) -> Color {
         if point.x.floor() as i32 % 2 == 0 {
             self.a.clone()
         } else {
             self.b.clone()
         }
-    }
-
-    pub fn at_object(&self, object: Rc<Shape>, world_point: &Tuple) -> Color {
-        let object_point = (&object.transform().inverse()) * world_point;
-        let pattern_point = self.transform.inverse() * object_point;
-        self.at(&pattern_point)
     }
 }
 
@@ -93,7 +114,7 @@ mod spec {
         object.transform = scaling(2., 2., 2.);
         let pattern = stripe_pattern(white(), black());
 
-        let c = pattern.at_object(Rc::new(object), &point(1.5, 0., 0.));
+        let c = pattern.at_shape(Rc::new(object), &point(1.5, 0., 0.));
 
         assert_eq!(c, white());
     }
@@ -104,7 +125,7 @@ mod spec {
         let mut pattern = stripe_pattern(white(), black());
         pattern.transform = scaling(2., 2., 2.);
 
-        let c = pattern.at_object(Rc::new(object), &point(1.5, 0., 0.));
+        let c = pattern.at_shape(Rc::new(object), &point(1.5, 0., 0.));
 
         assert_eq!(c, white());
     }
@@ -116,7 +137,7 @@ mod spec {
         let mut pattern = stripe_pattern(white(), black());
         pattern.transform = translation(0.5, 0., 0.);
 
-        let c = pattern.at_object(Rc::new(object), &point(2.5, 0., 0.));
+        let c = pattern.at_shape(Rc::new(object), &point(2.5, 0., 0.));
 
         assert_eq!(c, white());
     }

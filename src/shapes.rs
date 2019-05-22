@@ -116,8 +116,10 @@ mod spec {
         m.ambient = 1.;
 
         let mut s = test_shape();
-        s.set_material(m.clone());
+        s.set_material(m);
 
+        let mut m = material();
+        m.ambient = 1.;
         assert_eq!(s.material(), &m);
     }
 

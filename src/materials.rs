@@ -1,17 +1,17 @@
 use lights::PointLight;
-use patterns::Stripe;
+use patterns::Pattern;
 use tuples::{color, Color, Tuple};
 use shapes::Shape;
 use std::rc::Rc;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct Material {
     pub color: Color,
     pub ambient: f64,
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
-    pub pattern: Option<Stripe>,
+    pub pattern: Option<Box<Pattern>>,
 }
 
 pub fn material() -> Material {
@@ -35,7 +35,7 @@ impl Material {
         normal: &Tuple,
         in_shadow: bool,
     ) -> Color {
-        let pos = self.pattern.as_ref().map(|p| p.at_object(object, position));
+        let pos = self.pattern.as_ref().map(|p| p.at_shape(object, position));
         let surface_color = pos.as_ref().unwrap_or(&self.color);
 
         // combine the surface color with the light's color/intensity
@@ -171,7 +171,7 @@ mod spec {
     fn lighting_with_a_pattern_applied() {
         let mut m = material();
         let object = Rc::new(sphere());
-        m.pattern = Some(stripe_pattern(color(1., 1., 1.), color(0., 0., 0.)));
+        m.pattern = Some(Box::new(stripe_pattern(color(1., 1., 1.), color(0., 0., 0.))));
         m.ambient = 1.;
         m.diffuse = 0.;
         m.specular = 0.;
