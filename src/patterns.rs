@@ -86,6 +86,34 @@ pub fn gradient_pattern(a: Color, b: Color) -> Gradient {
     Gradient { a, b, transform }
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct Ring {
+    a: Color,
+    b: Color,
+    transform: Matrix,
+}
+impl Pattern for Ring {
+    fn transform(&self) -> &Matrix {
+        &self.transform
+    }
+
+    fn set_transform(&mut self, transform: Matrix) {
+        self.transform = transform;
+    }
+
+    fn at(&self, point: &Tuple) -> Color {
+        if ((point.x.powi(2) + point.z.powi(2)).sqrt()).floor() as i32 % 2 == 0 {
+            self.a.clone()
+        } else {
+            self.b.clone()
+        }
+    }
+}
+
+pub fn ring_pattern(a: Color, b: Color) -> Ring {
+    let transform = identity_matrix();
+    Ring { a, b, transform }
+}
 
 #[cfg(test)]
 mod spec {
@@ -183,5 +211,15 @@ mod spec {
         assert_eq!(pattern.at(&point(0.25, 0., 0.)), color(0.75,0.75,0.75));
         assert_eq!(pattern.at(&point(0.5, 0., 0.)), color(0.5,0.5,0.5));
         assert_eq!(pattern.at(&point(0.75, 0., 0.)), color(0.25,0.25,0.25));
+    }
+
+    #[test]
+    fn a_ring_should_extend_in_both_x_and_z() {
+        let pattern = ring_pattern(white(), black());
+
+        assert_eq!(pattern.at(&point(0., 0., 0.)), white());
+        assert_eq!(pattern.at(&point(1., 0., 0.)), black());
+        assert_eq!(pattern.at(&point(0., 0., 1.)), black());
+        assert_eq!(pattern.at(&point(0.708, 0., 0.708)), black());
     }
 }
