@@ -53,7 +53,6 @@ impl Pattern for Stripe {
         }
     }
 }
-
 pub fn stripe_pattern(a: Color, b: Color) -> Stripe {
     let transform = identity_matrix();
     Stripe { a, b, transform }
@@ -80,7 +79,6 @@ impl Pattern for Gradient {
         &self.a + &(distance * fraction)
     }
 }
-
 pub fn gradient_pattern(a: Color, b: Color) -> Gradient {
     let transform = identity_matrix();
     Gradient { a, b, transform }
@@ -109,10 +107,37 @@ impl Pattern for Ring {
         }
     }
 }
-
 pub fn ring_pattern(a: Color, b: Color) -> Ring {
     let transform = identity_matrix();
     Ring { a, b, transform }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Checkers {
+    a: Color,
+    b: Color,
+    transform: Matrix,
+}
+impl Pattern for Checkers {
+    fn transform(&self) -> &Matrix {
+        &self.transform
+    }
+
+    fn set_transform(&mut self, transform: Matrix) {
+        self.transform = transform;
+    }
+
+    fn at(&self, point: &Tuple) -> Color {
+        if (point.x.floor() + point.y.floor() + point.z.floor()) as i32 % 2 == 0 {
+            self.a.clone()
+        } else {
+            self.b.clone()
+        }
+    }
+}
+pub fn checkers_pattern(a: Color, b: Color) -> Checkers {
+    let transform = identity_matrix();
+    Checkers { a, b, transform }
 }
 
 #[cfg(test)]
@@ -204,13 +229,13 @@ mod spec {
     }
 
     #[test]
-    fn a_gradient_linearly_interpolates_between_colors(){
+    fn a_gradient_linearly_interpolates_between_colors() {
         let pattern = gradient_pattern(white(), black());
 
         assert_eq!(pattern.at(&point(0., 0., 0.)), white());
-        assert_eq!(pattern.at(&point(0.25, 0., 0.)), color(0.75,0.75,0.75));
-        assert_eq!(pattern.at(&point(0.5, 0., 0.)), color(0.5,0.5,0.5));
-        assert_eq!(pattern.at(&point(0.75, 0., 0.)), color(0.25,0.25,0.25));
+        assert_eq!(pattern.at(&point(0.25, 0., 0.)), color(0.75, 0.75, 0.75));
+        assert_eq!(pattern.at(&point(0.5, 0., 0.)), color(0.5, 0.5, 0.5));
+        assert_eq!(pattern.at(&point(0.75, 0., 0.)), color(0.25, 0.25, 0.25));
     }
 
     #[test]
@@ -221,5 +246,32 @@ mod spec {
         assert_eq!(pattern.at(&point(1., 0., 0.)), black());
         assert_eq!(pattern.at(&point(0., 0., 1.)), black());
         assert_eq!(pattern.at(&point(0.708, 0., 0.708)), black());
+    }
+
+    #[test]
+    fn checkers_should_repeat_in_x() {
+        let pattern = checkers_pattern(white(), black());
+
+        assert_eq!(pattern.at(&point(0., 0., 0.)), white());
+        assert_eq!(pattern.at(&point(0.99, 0., 0.)), white());
+        assert_eq!(pattern.at(&point(1.01, 0., 0.)), black());
+    }
+
+    #[test]
+    fn checkers_should_repeat_in_y() {
+        let pattern = checkers_pattern(white(), black());
+
+        assert_eq!(pattern.at(&point(0., 0., 0.)), white());
+        assert_eq!(pattern.at(&point(0., 0.99, 0.)), white());
+        assert_eq!(pattern.at(&point(0., 1.01, 0.)), black());
+    }
+
+    #[test]
+    fn checkers_should_repeat_in_z() {
+        let pattern = checkers_pattern(white(), black());
+
+        assert_eq!(pattern.at(&point(0., 0., 0.)), white());
+        assert_eq!(pattern.at(&point(0., 0., 0.99)), white());
+        assert_eq!(pattern.at(&point(0., 0., 1.01)), black());
     }
 }
