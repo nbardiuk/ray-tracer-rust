@@ -7,8 +7,9 @@ use tuples::Tuple;
 
 pub trait Pattern {
     fn transform(&self) -> &Matrix;
-    fn at(&self, point: &Tuple) -> Color;
+    fn set_transform(&mut self, transform: Matrix);
 
+    fn at(&self, point: &Tuple) -> Color;
     fn at_shape(&self, shape: Rc<Shape>, world_point: &Tuple) -> Color {
         let shape_point = (&shape.transform().inverse()) * world_point;
         let pattern_point = self.transform().inverse() * shape_point;
@@ -38,6 +39,10 @@ pub struct Stripe {
 impl Pattern for Stripe {
     fn transform(&self) -> &Matrix {
         &self.transform
+    }
+
+    fn set_transform(&mut self, transform: Matrix) {
+        self.transform = transform;
     }
 
     fn at(&self, point: &Tuple) -> Color {
@@ -109,7 +114,7 @@ mod spec {
     }
 
     #[test]
-    fn stripes_with_an_object_transformation() {
+    fn a_pattern_with_an_object_transformation() {
         let mut object = sphere();
         object.transform = scaling(2., 2., 2.);
         let pattern = stripe_pattern(white(), black());
@@ -120,10 +125,10 @@ mod spec {
     }
 
     #[test]
-    fn stripes_with_a_pattern_transformation() {
+    fn a_pattern_with_a_pattern_transformation() {
         let object = sphere();
         let mut pattern = stripe_pattern(white(), black());
-        pattern.transform = scaling(2., 2., 2.);
+        pattern.set_transform(scaling(2., 2., 2.));
 
         let c = pattern.at_shape(Rc::new(object), &point(1.5, 0., 0.));
 
@@ -131,11 +136,11 @@ mod spec {
     }
 
     #[test]
-    fn stripes_with_both_an_object_and_a_pattern_transformation() {
+    fn a_pattern_with_both_an_object_and_a_pattern_transformation() {
         let mut object = sphere();
         object.transform = scaling(2., 2., 2.);
         let mut pattern = stripe_pattern(white(), black());
-        pattern.transform = translation(0.5, 0., 0.);
+        pattern.set_transform(translation(0.5, 0., 0.));
 
         let c = pattern.at_shape(Rc::new(object), &point(2.5, 0., 0.));
 
