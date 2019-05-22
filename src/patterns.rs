@@ -59,6 +59,34 @@ pub fn stripe_pattern(a: Color, b: Color) -> Stripe {
     Stripe { a, b, transform }
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct Gradient {
+    a: Color,
+    b: Color,
+    transform: Matrix,
+}
+impl Pattern for Gradient {
+    fn transform(&self) -> &Matrix {
+        &self.transform
+    }
+
+    fn set_transform(&mut self, transform: Matrix) {
+        self.transform = transform;
+    }
+
+    fn at(&self, point: &Tuple) -> Color {
+        let distance = &self.b - &self.a;
+        let fraction = point.x - point.x.floor();
+        &self.a + &(distance * fraction)
+    }
+}
+
+pub fn gradient_pattern(a: Color, b: Color) -> Gradient {
+    let transform = identity_matrix();
+    Gradient { a, b, transform }
+}
+
+
 #[cfg(test)]
 mod spec {
     use super::*;
@@ -145,5 +173,15 @@ mod spec {
         let c = pattern.at_shape(Rc::new(object), &point(2.5, 0., 0.));
 
         assert_eq!(c, white());
+    }
+
+    #[test]
+    fn a_gradient_linearly_interpolates_between_colors(){
+        let pattern = gradient_pattern(white(), black());
+
+        assert_eq!(pattern.at(&point(0., 0., 0.)), white());
+        assert_eq!(pattern.at(&point(0.25, 0., 0.)), color(0.75,0.75,0.75));
+        assert_eq!(pattern.at(&point(0.5, 0., 0.)), color(0.5,0.5,0.5));
+        assert_eq!(pattern.at(&point(0.75, 0., 0.)), color(0.25,0.25,0.25));
     }
 }

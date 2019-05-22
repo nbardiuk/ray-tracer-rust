@@ -97,7 +97,7 @@ impl Sub for Tuple {
     }
 }
 
-impl <'a> Neg for &'a Tuple {
+impl<'a> Neg for &'a Tuple {
     type Output = Tuple;
 
     fn neg(self) -> Tuple {
@@ -177,10 +177,11 @@ pub struct Color {
 pub fn color(red: f64, green: f64, blue: f64) -> Color {
     Color { red, green, blue }
 }
-impl Add for Color {
+
+impl<'a> Add for &'a Color {
     type Output = Color;
 
-    fn add(self, other: Color) -> Color {
+    fn add(self, other: &'a Color) -> Color {
         Color {
             red: self.red + other.red,
             green: self.green + other.green,
@@ -188,15 +189,30 @@ impl Add for Color {
         }
     }
 }
-impl Sub for Color {
+impl Add for Color {
     type Output = Color;
 
-    fn sub(self, other: Color) -> Color {
+    fn add(self, other: Color) -> Color {
+        &self + &other
+    }
+}
+
+impl<'a> Sub for &'a Color {
+    type Output = Color;
+
+    fn sub(self, other: &'a Color) -> Color {
         Color {
             red: self.red - other.red,
             green: self.green - other.green,
             blue: self.blue - other.blue,
         }
+    }
+}
+impl Sub for Color {
+    type Output = Color;
+
+    fn sub(self, other: Color) -> Color {
+        &self - &other
     }
 }
 
