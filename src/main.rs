@@ -21,6 +21,9 @@ extern crate hamcrest2;
 use camera::camera;
 use lights::point_light;
 use materials::material;
+use patterns::checkers_pattern;
+use patterns::ring_pattern;
+use patterns::Pattern;
 use planes::plane;
 use shapes::Shape;
 use spheres::sphere;
@@ -32,11 +35,13 @@ use tuples::{color, point, vector};
 use world::world;
 
 fn main() {
+    let mut checkers = checkers_pattern(color(0., 0., 0.), color(1., 1., 1.));
+    checkers.set_transform(scaling(0.1, 0.1, 0.1));
+    let mut m = material();
+    m.specular = 0.;
+    m.pattern = Some(Box::new(checkers));
     let mut floor = plane();
     floor.set_transform(scaling(10., 0.01, 10.));
-    let mut m = material();
-    m.color = color(1., 0.9, 0.9);
-    m.specular = 0.;
     floor.set_material(m);
 
     let mut middle = sphere();
@@ -52,6 +57,9 @@ fn main() {
     right.material.color = color(0.5, 1., 0.1);
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
+    let mut rings = ring_pattern(color(0.5, 1., 0.1), color(1., 0.1, 0.5));
+    rings.set_transform(rotation_x(1.5) * scaling(0.05, 0.05, 0.05));
+    right.material.pattern = Some(Box::new(rings));
 
     let mut left = sphere();
     left.transform = translation(-1.5, 0.33, -0.75) * scaling(0.33, 0.33, 0.33);
