@@ -39,6 +39,7 @@ fn main() {
     checkers.set_transform(scaling(0.1, 0.1, 0.1));
     let mut m = material();
     m.specular = 0.;
+    m.reflective = 1.;
     m.pattern = Some(Box::new(checkers));
     let mut floor = plane();
     floor.set_transform(scaling(10., 0.01, 10.));
@@ -50,6 +51,7 @@ fn main() {
     middle.material.color = color(0.1, 1., 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
+    middle.material.reflective = 0.8;
 
     let mut right = sphere();
     right.transform = translation(1.5, 0.5, -0.5) * scaling(0.5, 0.5, 0.5);
@@ -57,6 +59,7 @@ fn main() {
     right.material.color = color(0.5, 1., 0.1);
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
+    right.material.reflective = 0.4;
     let mut rings = ring_pattern(color(0.5, 1., 0.1), color(1., 0.1, 0.5));
     rings.set_transform(rotation_x(1.5) * scaling(0.05, 0.05, 0.05));
     right.material.pattern = Some(Box::new(rings));
@@ -67,6 +70,7 @@ fn main() {
     left.material.color = color(1., 0.8, 0.1);
     left.material.diffuse = 0.7;
     left.material.specular = 0.3;
+    left.material.reflective = 0.6;
 
     let mut world = world();
     world.objects = vec![
