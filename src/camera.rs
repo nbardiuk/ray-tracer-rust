@@ -6,6 +6,7 @@ use rays::ray;
 use rays::Ray;
 use tuples::point;
 use world::World;
+use world::MAX_REFLECTIONS;
 
 pub struct Camera {
     hsize: usize,
@@ -66,7 +67,7 @@ impl Camera {
         for x in 0..canvas.width {
             for y in 0..canvas.height {
                 let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(&ray);
+                let color = world.color_at(&ray, MAX_REFLECTIONS);
                 canvas.write_pixel(x, y, color);
             }
         }

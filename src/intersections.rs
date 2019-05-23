@@ -32,13 +32,14 @@ pub fn hit<'a>(xs: &'a Vec<Intersection>) -> Option<&'a Intersection> {
 }
 
 pub struct Comps {
-    pub t: f64,
-    pub object: Rc<Shape>,
-    pub point: Tuple,
-    pub over_point: Tuple,
     pub eyev: Tuple,
-    pub normalv: Tuple,
     pub inside: bool,
+    pub normalv: Tuple,
+    pub object: Rc<Shape>,
+    pub over_point: Tuple,
+    pub point: Tuple,
+    pub reflectv: Tuple,
+    pub t: f64,
 }
 
 impl Intersection {
@@ -49,14 +50,16 @@ impl Intersection {
         let inside = normalv.dot(&eyev) < 0.;
         let normalv = if inside { -normalv } else { normalv };
         let over_point = &point + &normalv * EPSILON;
+        let reflectv = r.direction.reflect(&normalv);
         Comps {
-            t: self.t,
-            object: self.object.clone(),
-            point,
-            over_point,
             eyev,
-            normalv,
             inside,
+            normalv,
+            object: self.object.clone(),
+            over_point,
+            point,
+            reflectv,
+            t: self.t,
         }
     }
 }
@@ -65,6 +68,7 @@ impl Intersection {
 mod spec {
     use super::*;
     use hamcrest2::prelude::*;
+    use planes::plane;
     use rays::ray;
     use spheres::sphere;
     use transformations::translation;
@@ -185,5 +189,17 @@ mod spec {
 
         assert_that!(comps.over_point.z, lt(-EPSILON / 2.));
         assert_that!(comps.point.z, gt(comps.over_point.z));
+    }
+
+    #[test]
+    fn precomputes_the_reflection_vector() {
+        let sq2 = 2.0_f64.sqrt();
+        let shape = plane();
+        let r = ray(point(0., 1., -1.), vector(0., -sq2 / 2., sq2 / 2.));
+        let i = intersection(sq2, Rc::new(shape));
+
+        let comps = i.prepare_computations(&r);
+
+        assert_eq!(comps.reflectv, vector(0., sq2 / 2., sq2 / 2.));
     }
 }

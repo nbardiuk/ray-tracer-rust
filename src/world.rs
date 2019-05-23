@@ -10,6 +10,8 @@ use tuples::color;
 use tuples::Color;
 use tuples::Tuple;
 
+pub const MAX_REFLECTIONS: i8 = 6;
+
 pub struct World {
     pub objects: Vec<Rc<Shape>>,
     pub light_sources: Vec<PointLight>,
@@ -33,7 +35,7 @@ impl World {
         xs
     }
 
-    fn shade_hit(&self, comps: Comps) -> Color {
+    fn shade_hit(&self, comps: Comps, remaining: i8) -> Color {
         self.light_sources
             .iter()
             .map(|light| {
@@ -44,14 +46,14 @@ impl World {
                     &comps.eyev,
                     &comps.normalv,
                     self.is_shadowed(light, &comps.over_point),
-                )
+                ) + self.reflected_color(&comps, remaining)
             })
             .fold(color(0., 0., 0.), |acc, color| acc + color)
     }
 
-    pub fn color_at(&self, ray: &Ray) -> Color {
+    pub fn color_at(&self, ray: &Ray, remaining: i8) -> Color {
         hit(&self.intersects(ray))
-            .map(|hit| self.shade_hit(hit.prepare_computations(ray)))
+            .map(|hit| self.shade_hit(hit.prepare_computations(ray), remaining))
             .unwrap_or_else(|| color(0., 0., 0.))
     }
 
@@ -63,6 +65,15 @@ impl World {
         let intersections = self.intersects(&r);
         hit(&intersections).map_or(false, |h| h.t < distance)
     }
+
+    fn reflected_color(&self, comps: &Comps, remaining: i8) -> Color {
+        if remaining < 1 || comps.object.material().reflective == 0. {
+            color(0., 0., 0.)
+        } else {
+            let reflect_ray = ray(comps.over_point.clone(), comps.reflectv.clone());
+            self.color_at(&reflect_ray, remaining - 1) * comps.object.material().reflective
+        }
+    }
 }
 
 #[cfg(test)]
@@ -71,6 +82,7 @@ pub mod spec {
     use hamcrest2::prelude::*;
     use intersections::intersection;
     use lights::point_light;
+    use planes::plane;
     use rays::ray;
     use spheres::sphere;
     use transformations::scaling;
@@ -140,7 +152,7 @@ pub mod spec {
         let i = intersection(4., shape);
 
         let comps = i.prepare_computations(&r);
-        let c = w.shade_hit(comps);
+        let c = w.shade_hit(comps, MAX_REFLECTIONS);
 
         assert_eq!(c, color(0.38066, 0.47583, 0.2855));
     }
@@ -154,7 +166,7 @@ pub mod spec {
         let i = intersection(0.5, shape);
 
         let comps = i.prepare_computations(&r);
-        let c = w.shade_hit(comps);
+        let c = w.shade_hit(comps, MAX_REFLECTIONS);
 
         assert_eq!(c, color(0.90498, 0.90498, 0.90498));
     }
@@ -172,7 +184,7 @@ pub mod spec {
         let i = intersection(4., s2rc.clone());
 
         let comps = i.prepare_computations(&r);
-        let c = w.shade_hit(comps);
+        let c = w.shade_hit(comps, MAX_REFLECTIONS);
 
         assert_that!(c, eq(color(0.1, 0.1, 0.1)));
     }
@@ -182,7 +194,7 @@ pub mod spec {
         let w = default_world();
         let r = ray(point(0., 0., -5.), vector(0., 1., 0.));
 
-        let c = w.color_at(&r);
+        let c = w.color_at(&r, MAX_REFLECTIONS);
 
         assert_eq!(c, color(0., 0., 0.));
     }
@@ -192,7 +204,7 @@ pub mod spec {
         let w = default_world();
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
 
-        let c = w.color_at(&r);
+        let c = w.color_at(&r, MAX_REFLECTIONS);
 
         assert_eq!(c, color(0.38066, 0.47583, 0.2855));
     }
@@ -212,7 +224,7 @@ pub mod spec {
         w.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
         let r = ray(point(0., 0., 0.75), vector(0., 0., -1.));
 
-        let c = w.color_at(&r);
+        let c = w.color_at(&r, MAX_REFLECTIONS);
 
         assert_eq!(c, w.objects[1].material().color);
     }
@@ -243,5 +255,98 @@ pub mod spec {
         let w = default_world();
         let p = point(-2., 2., -2.);
         assert_that!(w.is_shadowed(&w.light_sources[0], &p), is(false));
+    }
+
+    #[test]
+    fn the_reflected_color_for_nonreflective_material() {
+        let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
+        let mut s1 = sphere();
+        s1.material.color = color(0.8, 1., 0.6);
+        s1.material.diffuse = 0.7;
+        s1.material.specular = 0.2;
+        let mut s2 = sphere();
+        s2.transform = scaling(0.5, 0.5, 0.5);
+        s2.material.ambient = 1.;
+        let shape = Rc::new(s2);
+        let w = World {
+            objects: vec![Rc::new(s1), shape.clone()],
+            light_sources: vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))],
+        };
+        let i = intersection(1., shape.clone());
+
+        let comps = i.prepare_computations(&r);
+        let c = w.reflected_color(&comps, MAX_REFLECTIONS);
+
+        assert_eq!(c, color(0., 0., 0.));
+    }
+
+    #[test]
+    fn the_reflected_color_for_a_reflective_material() {
+        let mut shape = plane();
+        shape.material.reflective = 0.5;
+        shape.transform = translation(0., -1., 0.);
+        let s = Rc::new(shape);
+        let mut w = default_world();
+        w.objects.push(s.clone());
+        let sq2 = 2_f64.sqrt();
+        let r = ray(point(0., 0., -3.), vector(0., -sq2 / 2., sq2 / 2.));
+        let i = intersection(sq2, s.clone());
+
+        let comps = i.prepare_computations(&r);
+        let c = w.reflected_color(&comps, MAX_REFLECTIONS);
+
+        assert_eq!(c, color(0.19033, 0.23791, 0.14274));
+    }
+
+    #[test]
+    fn shade_hit_with_a_reflective_material() {
+        let mut shape = plane();
+        shape.material.reflective = 0.5;
+        shape.transform = translation(0., -1., 0.);
+        let s = Rc::new(shape);
+        let mut w = default_world();
+        w.objects.push(s.clone());
+        let sq2 = 2_f64.sqrt();
+        let r = ray(point(0., 0., -3.), vector(0., -sq2 / 2., sq2 / 2.));
+        let i = intersection(sq2, s.clone());
+
+        let comps = i.prepare_computations(&r);
+        let c = w.shade_hit(comps, MAX_REFLECTIONS);
+
+        assert_eq!(c, color(0.87675, 0.92433, 0.82917));
+    }
+
+    #[test]
+    fn color_at_with_mutually_reflective_surfaces() {
+        let mut lower = plane();
+        lower.material.reflective = 1.;
+        lower.transform = translation(0., -1., 0.);
+        let mut upper = plane();
+        upper.material.reflective = 1.;
+        upper.transform = translation(0., 1., 0.);
+        let mut w = world();
+        w.light_sources = vec![point_light(point(0., 0., 0.), color(1., 1., 1.))];
+        w.objects = vec![Rc::new(lower), Rc::new(upper)];
+        let r = ray(point(0., 0., 0.), vector(0., 1., 0.));
+
+        assert_eq!(w.color_at(&r, MAX_REFLECTIONS), color(13.3, 13.3, 13.3)); //exits recursion
+    }
+
+    #[test]
+    fn the_reflected_color_at_maximum_recursive_depth() {
+        let mut shape = plane();
+        shape.material.reflective = 0.5;
+        shape.transform = translation(0., -1., 0.);
+        let s = Rc::new(shape);
+        let mut w = default_world();
+        w.objects.push(s.clone());
+        let sq2 = 2_f64.sqrt();
+        let r = ray(point(0., 0., -3.), vector(0., -sq2 / 2., sq2 / 2.));
+        let i = intersection(sq2, s.clone());
+
+        let comps = i.prepare_computations(&r);
+        let c = w.reflected_color(&comps, 0);
+
+        assert_eq!(c, color(0., 0., 0.));
     }
 }

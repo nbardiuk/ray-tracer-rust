@@ -1,27 +1,29 @@
 use lights::PointLight;
 use patterns::Pattern;
-use tuples::{color, Color, Tuple};
 use shapes::Shape;
 use std::rc::Rc;
+use tuples::{color, Color, Tuple};
 
 #[derive(Debug, PartialEq)]
 pub struct Material {
-    pub color: Color,
     pub ambient: f64,
+    pub color: Color,
     pub diffuse: f64,
-    pub specular: f64,
-    pub shininess: f64,
     pub pattern: Option<Box<Pattern>>,
+    pub reflective: f64,
+    pub shininess: f64,
+    pub specular: f64,
 }
 
 pub fn material() -> Material {
     Material {
-        color: color(1., 1., 1.),
         ambient: 0.1,
+        color: color(1., 1., 1.),
         diffuse: 0.9,
-        specular: 0.9,
-        shininess: 200.,
         pattern: None,
+        reflective: 0.0,
+        shininess: 200.,
+        specular: 0.9,
     }
 }
 
@@ -77,8 +79,8 @@ mod spec {
     use hamcrest2::prelude::*;
     use lights::point_light;
     use patterns::stripe_pattern;
-    use tuples::{color, point, vector};
     use spheres::sphere;
+    use tuples::{color, point, vector};
 
     #[test]
     fn the_default_material() {
@@ -171,7 +173,10 @@ mod spec {
     fn lighting_with_a_pattern_applied() {
         let mut m = material();
         let object = Rc::new(sphere());
-        m.pattern = Some(Box::new(stripe_pattern(color(1., 1., 1.), color(0., 0., 0.))));
+        m.pattern = Some(Box::new(stripe_pattern(
+            color(1., 1., 1.),
+            color(0., 0., 0.),
+        )));
         m.ambient = 1.;
         m.diffuse = 0.;
         m.specular = 0.;
@@ -180,10 +185,30 @@ mod spec {
         let light = point_light(point(0., 0., -10.), color(1., 1., 1.));
         let in_shadow = false;
 
-        let c1 = m.lighting(object.clone(), &light, &point(0.9, 0., 0.), &eyev, &normalv, in_shadow);
-        let c2 = m.lighting(object.clone(), &light, &point(1.1, 0., 0.), &eyev, &normalv, in_shadow);
+        let c1 = m.lighting(
+            object.clone(),
+            &light,
+            &point(0.9, 0., 0.),
+            &eyev,
+            &normalv,
+            in_shadow,
+        );
+        let c2 = m.lighting(
+            object.clone(),
+            &light,
+            &point(1.1, 0., 0.),
+            &eyev,
+            &normalv,
+            in_shadow,
+        );
 
         assert_that!(c1, eq(color(1., 1., 1.)));
         assert_that!(c2, eq(color(0., 0., 0.)));
+    }
+
+    #[test]
+    fn reflectivity_for_the_default_material() {
+        let m = material();
+        assert_eq!(m.reflective, 0.);
     }
 }

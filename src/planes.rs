@@ -15,8 +15,8 @@ use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Plane {
-    transform: Matrix,
-    material: Material,
+    pub transform: Matrix,
+    pub material: Material,
 }
 
 impl Shape for Plane {
