@@ -62,7 +62,7 @@ impl Camera {
         ray(origin, direction)
     }
 
-    pub fn render<'a>(self: &Camera, world: World) -> Canvas {
+    pub fn render(self: &Camera, world: World) -> Canvas {
         let mut canvas = canvas(self.hsize, self.vsize);
         for x in 0..canvas.width {
             for y in 0..canvas.height {
@@ -70,6 +70,7 @@ impl Camera {
                 let color = world.color_at(&ray, MAX_REFLECTIONS);
                 canvas.write_pixel(x, y, color);
             }
+            eprint!("rendering {} \r", (100.0 * x as f64) / (canvas.width as f64))
         }
         canvas
     }
