@@ -22,6 +22,13 @@ pub fn sphere() -> Sphere {
     }
 }
 
+pub fn glass_sphere() -> Sphere {
+    let mut sphere = sphere();
+    sphere.material.transparency = 1.0;
+    sphere.material.refractive_index = 1.5;
+    sphere
+}
+
 impl Shape for Sphere {
     fn material(&self) -> &Material {
         &self.material
@@ -201,5 +208,14 @@ mod spec {
         let a = 3_f64.sqrt() / 3.;
         let n = s.local_normal_at(point(a, a, a));
         assert_eq!(n, n.normalized());
+    }
+
+    #[test]
+    fn a_helper_for_producing_a_sphere_with_a_glassy_material() {
+        let s = glass_sphere();
+
+        assert_eq!(s.transform, identity_matrix());
+        assert_eq!(s.material.transparency, 1.0);
+        assert_eq!(s.material.refractive_index, 1.5);
     }
 }

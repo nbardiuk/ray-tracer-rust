@@ -10,9 +10,11 @@ pub struct Material {
     pub color: Color,
     pub diffuse: f64,
     pub pattern: Option<Box<Pattern>>,
+    pub refractive_index: f64,
     pub reflective: f64,
     pub shininess: f64,
     pub specular: f64,
+    pub transparency: f64,
 }
 
 pub fn material() -> Material {
@@ -21,9 +23,11 @@ pub fn material() -> Material {
         color: color(1., 1., 1.),
         diffuse: 0.9,
         pattern: None,
+        refractive_index: 1.0,
         reflective: 0.0,
         shininess: 200.,
         specular: 0.9,
+        transparency: 0.,
     }
 }
 
@@ -210,5 +214,13 @@ mod spec {
     fn reflectivity_for_the_default_material() {
         let m = material();
         assert_eq!(m.reflective, 0.);
+    }
+
+    #[test]
+    fn transparency_and_refractive_index_for_the_default_material() {
+        let m = material();
+
+        assert_eq!(m.transparency, 0.);
+        assert_eq!(m.refractive_index, 1.);
     }
 }

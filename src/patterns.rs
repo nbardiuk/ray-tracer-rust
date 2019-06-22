@@ -141,7 +141,7 @@ pub fn checkers_pattern(a: Color, b: Color) -> Checkers {
 }
 
 #[cfg(test)]
-mod spec {
+pub mod spec {
     use super::*;
     use spheres::sphere;
     use transformations::scaling;
@@ -155,6 +155,27 @@ mod spec {
     }
     fn white() -> Color {
         color(1., 1., 1.)
+    }
+
+    pub struct TestPattern {
+        transform: Matrix,
+    }
+    impl Pattern for TestPattern {
+        fn transform(&self) -> &Matrix {
+            &self.transform
+        }
+
+        fn set_transform(&mut self, transform: Matrix) {
+            self.transform = transform;
+        }
+
+        fn at(&self, point: &Tuple) -> Color {
+            color(point.x, point.y, point.z)
+        }
+    }
+    pub fn test_pattern() -> TestPattern {
+        let transform = identity_matrix();
+        TestPattern { transform }
     }
 
     #[test]
@@ -198,34 +219,34 @@ mod spec {
     fn a_pattern_with_an_object_transformation() {
         let mut object = sphere();
         object.transform = scaling(2., 2., 2.);
-        let pattern = stripe_pattern(white(), black());
+        let pattern = test_pattern();
 
-        let c = pattern.at_shape(Rc::new(object), &point(1.5, 0., 0.));
+        let c = pattern.at_shape(Rc::new(object), &point(2., 3., 4.));
 
-        assert_eq!(c, white());
+        assert_eq!(c, color(1., 1.5, 2.));
     }
 
     #[test]
     fn a_pattern_with_a_pattern_transformation() {
         let object = sphere();
-        let mut pattern = stripe_pattern(white(), black());
+        let mut pattern = test_pattern();
         pattern.set_transform(scaling(2., 2., 2.));
 
-        let c = pattern.at_shape(Rc::new(object), &point(1.5, 0., 0.));
+        let c = pattern.at_shape(Rc::new(object), &point(2., 3., 4.));
 
-        assert_eq!(c, white());
+        assert_eq!(c, color(1., 1.5, 2.));
     }
 
     #[test]
     fn a_pattern_with_both_an_object_and_a_pattern_transformation() {
         let mut object = sphere();
         object.transform = scaling(2., 2., 2.);
-        let mut pattern = stripe_pattern(white(), black());
-        pattern.set_transform(translation(0.5, 0., 0.));
+        let mut pattern = test_pattern();
+        pattern.set_transform(translation(0.5, 1., 1.5));
 
-        let c = pattern.at_shape(Rc::new(object), &point(2.5, 0., 0.));
+        let c = pattern.at_shape(Rc::new(object), &point(2.5, 3., 3.5));
 
-        assert_eq!(c, white());
+        assert_eq!(c, color(0.75, 0.5, 0.25));
     }
 
     #[test]

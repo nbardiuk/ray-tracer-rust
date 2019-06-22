@@ -38,19 +38,69 @@ pub struct Comps {
     pub object: Rc<Shape>,
     pub over_point: Tuple,
     pub point: Tuple,
+    pub under_point: Tuple,
     pub reflectv: Tuple,
     pub t: f64,
+    pub n1: f64,
+    pub n2: f64,
+}
+
+impl Comps {
+
+    pub fn is_internal_reflection(&self) -> bool {
+        // find the ratio of forst index of refraction to the second (Snell's Law)
+        let n_ratio = self.n1 / self.n2;
+        let cos_i = self.eyev.dot(&self.normalv);
+        let sin2_t = n_ratio.powi(2) * (1. - cos_i.powi(2));
+        sin2_t > 1.
+    }
+
+    pub fn refracted_direction(&self) -> Tuple {
+        // find the ratio of forst index of refraction to the second (Snell's Law)
+        let n_ratio = self.n1 / self.n2;
+        let cos_i = self.eyev.dot(&self.normalv);
+        let sin2_t = n_ratio.powi(2) * (1. - cos_i.powi(2));
+        let cos_t = (1. - sin2_t).sqrt();
+        &self.normalv * (n_ratio * cos_i - cos_t) - &self.eyev * n_ratio
+    }
 }
 
 impl Intersection {
-    pub fn prepare_computations(self: &Self, r: &Ray) -> Comps {
+    pub fn prepare_computations(self: &Self, r: &Ray, xs: &[Intersection]) -> Comps {
+        let mut n1 = 0.;
+        let mut n2 = 0.;
+        let mut containers: Vec<Rc<Shape>> = vec![];
+        for x in xs {
+            if self.eq(x) {
+                n1 = containers
+                    .last()
+                    .map_or(1., |o| o.material().refractive_index);
+            }
+            if containers.contains(&x.object) {
+                containers = containers
+                    .into_iter()
+                    .filter(|o| !o.eq(&x.object))
+                    .collect();
+            } else {
+                containers.push(x.object.clone());
+            }
+            if self.eq(x) {
+                n2 = containers
+                    .last()
+                    .map_or(1., |o| o.material().refractive_index);
+                break;
+            }
+        }
+
         let point = r.position(self.t);
         let normalv = self.object.normal_at(&point);
         let eyev = -(&r.direction);
         let inside = normalv.dot(&eyev) < 0.;
         let normalv = if inside { -normalv } else { normalv };
         let over_point = &point + &normalv * EPSILON;
+        let under_point = &point - &normalv * EPSILON;
         let reflectv = r.direction.reflect(&normalv);
+
         Comps {
             eyev,
             inside,
@@ -58,8 +108,11 @@ impl Intersection {
             object: self.object.clone(),
             over_point,
             point,
+            under_point,
             reflectv,
             t: self.t,
+            n1,
+            n2,
         }
     }
 }
@@ -70,7 +123,9 @@ mod spec {
     use hamcrest2::prelude::*;
     use planes::plane;
     use rays::ray;
+    use spheres::glass_sphere;
     use spheres::sphere;
+    use transformations::scaling;
     use transformations::translation;
     use tuples::point;
     use tuples::vector;
@@ -144,7 +199,7 @@ mod spec {
         let shape = Rc::new(sphere());
         let i = intersection(4., shape);
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
 
         assert_eq!(comps.t, i.t);
         assert_eq!(*comps.object, *i.object);
@@ -159,7 +214,7 @@ mod spec {
         let shape = Rc::new(sphere());
         let i = intersection(4., shape);
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
 
         assert_eq!(comps.inside, false);
     }
@@ -170,7 +225,7 @@ mod spec {
         let shape = Rc::new(sphere());
         let i = intersection(1., shape);
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
 
         assert_eq!(comps.inside, true);
         assert_eq!(comps.point, point(0., 0., 1.));
@@ -185,7 +240,7 @@ mod spec {
         shape.transform = translation(0., 0., 1.);
         let i = intersection(5., Rc::new(shape));
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
 
         assert_that!(comps.over_point.z, lt(-EPSILON / 2.));
         assert_that!(comps.point.z, gt(comps.over_point.z));
@@ -198,8 +253,63 @@ mod spec {
         let r = ray(point(0., 1., -1.), vector(0., -sq2 / 2., sq2 / 2.));
         let i = intersection(sq2, Rc::new(shape));
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
 
         assert_eq!(comps.reflectv, vector(0., sq2 / 2., sq2 / 2.));
+    }
+
+    #[test]
+    fn finding_n1_and_n2_at_various_intersections() {
+        let mut a = glass_sphere();
+        a.set_transform(scaling(2., 2., 2.));
+        a.material.refractive_index = 1.5;
+        let a = Rc::new(a);
+        let mut b = glass_sphere();
+        b.set_transform(translation(0., 0., -0.25));
+        b.material.refractive_index = 2.0;
+        let b = Rc::new(b);
+        let mut c = glass_sphere();
+        c.set_transform(translation(0., 0., 0.25));
+        c.material.refractive_index = 2.5;
+        let c = Rc::new(c);
+        let r = ray(point(0., 0., -4.), vector(0., 0., 1.));
+        let xs = &vec![
+            intersection(2., a.clone()),
+            intersection(2.75, b.clone()),
+            intersection(3.25, c.clone()),
+            intersection(4.75, b.clone()),
+            intersection(5.25, c.clone()),
+            intersection(6., a.clone()),
+        ];
+
+        let comps: Vec<Comps> = xs.iter().map(|i| i.prepare_computations(&r, xs)).collect();
+
+        assert_eq!(comps.get(0).unwrap().n1, 1.0);
+        assert_eq!(comps.get(0).unwrap().n2, 1.5);
+        assert_eq!(comps.get(1).unwrap().n1, 1.5);
+        assert_eq!(comps.get(1).unwrap().n2, 2.0);
+        assert_eq!(comps.get(2).unwrap().n1, 2.0);
+        assert_eq!(comps.get(2).unwrap().n2, 2.5);
+        assert_eq!(comps.get(3).unwrap().n1, 2.5);
+        assert_eq!(comps.get(3).unwrap().n2, 2.5);
+        assert_eq!(comps.get(4).unwrap().n1, 2.5);
+        assert_eq!(comps.get(4).unwrap().n2, 1.5);
+        assert_eq!(comps.get(5).unwrap().n1, 1.5);
+        assert_eq!(comps.get(5).unwrap().n2, 1.0);
+    }
+
+    #[test]
+    fn the_under_point_is_offset_below_the_surface() {
+        let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
+        let mut shape = glass_sphere();
+        shape.transform = translation(0., 0., 1.);
+        let shape = Rc::new(shape);
+        let i = intersection(5., shape.clone());
+        let xs = vec![i];
+
+        let comps = xs[0].prepare_computations(&r, &xs);
+
+        assert_that!(comps.under_point.z, gt(EPSILON/2.));
+        assert_that!(comps.under_point.z, gt(comps.point.z));
     }
 }

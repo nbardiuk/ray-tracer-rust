@@ -47,13 +47,15 @@ impl World {
                     &comps.normalv,
                     self.is_shadowed(light, &comps.over_point),
                 ) + self.reflected_color(&comps, remaining)
+                    + self.refracted_color(&comps, remaining)
             })
             .fold(color(0., 0., 0.), |acc, color| acc + color)
     }
 
     pub fn color_at(&self, ray: &Ray, remaining: i8) -> Color {
-        hit(&self.intersects(ray))
-            .map(|hit| self.shade_hit(hit.prepare_computations(ray), remaining))
+        let xs = &self.intersects(ray);
+        hit(xs)
+            .map(|hit| self.shade_hit(hit.prepare_computations(ray, xs), remaining))
             .unwrap_or_else(|| color(0., 0., 0.))
     }
 
@@ -74,6 +76,20 @@ impl World {
             self.color_at(&reflect_ray, remaining - 1) * comps.object.material().reflective
         }
     }
+
+    fn refracted_color(&self, comps: &Comps, remaining: i8) -> Color {
+        if remaining == 0 {
+            return color(0., 0., 0.);
+        }
+        if comps.object.material().transparency == 0. {
+            return color(0., 0., 0.);
+        }
+        if comps.is_internal_reflection() {
+            return color(0., 0., 0.);
+        }
+        let refract_ray = ray(comps.under_point.clone(), comps.refracted_direction());
+        self.color_at(&refract_ray, remaining - 1) * comps.object.material().transparency
+    }
 }
 
 #[cfg(test)]
@@ -82,6 +98,7 @@ pub mod spec {
     use hamcrest2::prelude::*;
     use intersections::intersection;
     use lights::point_light;
+    use patterns::spec::test_pattern;
     use planes::plane;
     use rays::ray;
     use spheres::sphere;
@@ -151,7 +168,7 @@ pub mod spec {
         let shape = w.objects[0].clone();
         let i = intersection(4., shape);
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
         let c = w.shade_hit(comps, MAX_REFLECTIONS);
 
         assert_eq!(c, color(0.38066, 0.47583, 0.2855));
@@ -165,7 +182,7 @@ pub mod spec {
         let shape = w.objects[1].clone();
         let i = intersection(0.5, shape);
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
         let c = w.shade_hit(comps, MAX_REFLECTIONS);
 
         assert_eq!(c, color(0.90498, 0.90498, 0.90498));
@@ -183,7 +200,7 @@ pub mod spec {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
         let i = intersection(4., s2rc.clone());
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
         let c = w.shade_hit(comps, MAX_REFLECTIONS);
 
         assert_that!(c, eq(color(0.1, 0.1, 0.1)));
@@ -274,7 +291,7 @@ pub mod spec {
         };
         let i = intersection(1., shape.clone());
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
         let c = w.reflected_color(&comps, MAX_REFLECTIONS);
 
         assert_eq!(c, color(0., 0., 0.));
@@ -292,7 +309,7 @@ pub mod spec {
         let r = ray(point(0., 0., -3.), vector(0., -sq2 / 2., sq2 / 2.));
         let i = intersection(sq2, s.clone());
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
         let c = w.reflected_color(&comps, MAX_REFLECTIONS);
 
         assert_eq!(c, color(0.19033, 0.23791, 0.14274));
@@ -310,7 +327,7 @@ pub mod spec {
         let r = ray(point(0., 0., -3.), vector(0., -sq2 / 2., sq2 / 2.));
         let i = intersection(sq2, s.clone());
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
         let c = w.shade_hit(comps, MAX_REFLECTIONS);
 
         assert_eq!(c, color(0.87675, 0.92433, 0.82917));
@@ -344,9 +361,125 @@ pub mod spec {
         let r = ray(point(0., 0., -3.), vector(0., -sq2 / 2., sq2 / 2.));
         let i = intersection(sq2, s.clone());
 
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &[]);
         let c = w.reflected_color(&comps, 0);
 
         assert_eq!(c, color(0., 0., 0.));
+    }
+
+    #[test]
+    fn the_refracted_color_with_an_opaque_surface() {
+        let w = default_world();
+        let shape = w.objects[0].clone();
+        let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
+        let xs = vec![
+            intersection(4., shape.clone()),
+            intersection(6., shape.clone()),
+        ];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let c = w.refracted_color(&comps, 5);
+
+        assert_eq!(c, color(0., 0., 0.));
+    }
+
+    #[test]
+    fn the_refracted_color_at_the_maximum_recursive_depth() {
+        let mut shape = sphere();
+        shape.material.color = color(0.8, 1., 0.6);
+        shape.material.diffuse = 0.7;
+        shape.material.specular = 0.2;
+        shape.material.transparency = 1.;
+        shape.material.refractive_index = 1.5;
+        let shape = Rc::new(shape);
+        let mut w = default_world();
+        w.objects[0] = shape.clone();
+        let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
+        let xs = vec![
+            intersection(4., shape.clone()),
+            intersection(6., shape.clone()),
+        ];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let c = w.refracted_color(&comps, 0);
+
+        assert_eq!(c, color(0., 0., 0.));
+    }
+
+    #[test]
+    fn the_refracted_color_under_total_internal_reflection() {
+        let mut shape = sphere();
+        shape.material.color = color(0.8, 1., 0.6);
+        shape.material.diffuse = 0.7;
+        shape.material.specular = 0.2;
+        shape.material.transparency = 1.;
+        shape.material.refractive_index = 1.5;
+        let shape = Rc::new(shape);
+        let mut w = default_world();
+        w.objects[0] = shape.clone();
+        let sq2 = 2_f64.sqrt();
+        let r = ray(point(0., 0., sq2 / 2.), vector(0., 1., 0.));
+        let xs = vec![
+            intersection(-sq2 / 2., shape.clone()),
+            intersection(sq2 / 2., shape.clone()),
+        ];
+        let comps = xs[1].prepare_computations(&r, &xs);
+        let c = w.refracted_color(&comps, 5);
+
+        assert_eq!(c, color(0., 0., 0.));
+    }
+
+    #[test]
+    fn the_refracted_color_with_a_refracted_ray() {
+        let mut a = sphere();
+        a.material.color = color(0.8, 1., 0.6);
+        a.material.diffuse = 0.7;
+        a.material.specular = 0.2;
+        a.material.ambient = 1.;
+        a.material.pattern = Some(Box::new(test_pattern()));
+        let a = Rc::new(a);
+        let mut b = sphere();
+        b.transform = scaling(0.5, 0.5, 0.5);
+        b.material.transparency = 1.;
+        b.material.refractive_index = 1.5;
+        let b = Rc::new(b);
+        let mut w = default_world();
+        w.objects[0] = a.clone();
+        w.objects[1] = b.clone();
+        let r = ray(point(0., 0., 0.1), vector(0., 1., 0.));
+        let xs = vec![
+            intersection(-0.9899, a.clone()),
+            intersection(-0.4899, b.clone()),
+            intersection(0.4899, b.clone()),
+            intersection(0.9899, a.clone()),
+        ];
+
+        let comps = xs[2].prepare_computations(&r, &xs);
+        let c = w.refracted_color(&comps, 5);
+
+        assert_eq!(c, color(0., 0.99888, 0.04722));
+    }
+
+    #[test]
+    fn shade_hit_with_a_transparent_material() {
+        let mut floor = plane();
+        floor.transform = translation(0., -1., 0.);
+        floor.material.transparency = 0.5;
+        floor.material.refractive_index = 1.5;
+        let floor = Rc::new(floor);
+        let mut ball = sphere();
+        ball.material.color = color(1., 0., 0.);
+        ball.material.ambient = 0.5;
+        ball.transform = translation(0., -3.5, -0.5);
+        let ball = Rc::new(ball);
+        let mut w = default_world();
+        w.objects.push(floor.clone());
+        w.objects.push(ball.clone());
+        let sq2 = 2_f64.sqrt();
+        let r = ray(point(0., 0., -3.), vector(0., -sq2 / 2., sq2 / 2.));
+        let xs = vec![intersection(sq2, floor.clone())];
+
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let c = w.shade_hit(comps, 5);
+
+        assert_eq!(c, color(0.93642, 0.68642, 0.68642));
     }
 }
