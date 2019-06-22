@@ -20,14 +20,9 @@ mod world;
 extern crate hamcrest2;
 
 use camera::camera;
+use cubes::cube;
 use lights::point_light;
-use materials::material;
-use patterns::checkers_pattern;
-use patterns::ring_pattern;
-use patterns::Pattern;
 use planes::plane;
-use shapes::Shape;
-use spheres::sphere;
 use std::f64::consts::PI;
 use std::fs;
 use std::rc::Rc;
@@ -36,49 +31,39 @@ use tuples::{color, point, vector};
 use world::world;
 
 fn main() {
-    let mut checkers = checkers_pattern(color(0., 0., 0.), color(1., 1., 1.));
-    checkers.set_transform(scaling(0.1, 0.1, 0.1));
-    let mut m = material();
-    m.specular = 0.;
-    m.reflective = 1.;
-    m.pattern = Some(Box::new(checkers));
     let mut floor = plane();
-    floor.set_transform(scaling(10., 0.01, 10.));
-    floor.set_material(m);
+    floor.transform = scaling(10., 0.01, 10.);
+    floor.material.specular = 0.;
+    floor.material.reflective = 1.;
+    floor.material.color = color(1., 1., 1.);
 
-    let mut middle = sphere();
-    middle.transform = translation(-0.5, 1., 0.5);
-    middle.material = material();
-    middle.material.color = color(0.1, 1., 0.5);
-    middle.material.diffuse = 0.7;
-    middle.material.specular = 0.3;
-    middle.material.reflective = 0.8;
-
-    let mut right = sphere();
-    right.transform = translation(1.5, 0.5, -0.5) * scaling(0.5, 0.5, 0.5);
-    right.material = material();
-    right.material.color = color(0.5, 1., 0.1);
-    right.material.diffuse = 0.7;
-    right.material.specular = 0.3;
-    right.material.reflective = 0.4;
-    let mut rings = ring_pattern(color(0.5, 1., 0.1), color(1., 0.1, 0.5));
-    rings.set_transform(rotation_x(1.5) * scaling(0.05, 0.05, 0.05));
-    right.material.pattern = Some(Box::new(rings));
-
-    let mut left = sphere();
-    left.transform = translation(-1.5, 0.33, -0.75) * scaling(0.33, 0.33, 0.33);
-    left.material = material();
-    left.material.color = color(1., 0.8, 0.1);
-    left.material.diffuse = 0.7;
-    left.material.specular = 0.3;
-    left.material.reflective = 0.6;
+    let wood = color(0.5, 0.3, 0.1);
+    let leg_size = scaling(0.05, 1., 0.05);
+    let table_rotation = rotation_y(PI / 6.);
+    let mut top = cube();
+    top.material.color = wood.clone();
+    top.transform = table_rotation.clone() * scaling(1., 0.05, 1.) * translation(0., 20., 0.);
+    let mut leg1 = cube();
+    leg1.material.color = wood.clone();
+    leg1.transform = table_rotation.clone() * translation(0.9, 0., -0.9) * leg_size.clone();
+    let mut leg2 = cube();
+    leg2.material.color = wood.clone();
+    leg2.transform = table_rotation.clone() * translation(-0.9, 0., -0.9) * leg_size.clone();
+    let mut leg3 = cube();
+    leg3.material.color = wood.clone();
+    leg3.transform = table_rotation.clone() * translation(0.9, 0., 0.9) * leg_size.clone();
+    let mut leg4 = cube();
+    leg4.material.color = wood.clone();
+    leg4.transform = table_rotation.clone() * translation(-0.9, 0., 0.9) * leg_size.clone();
 
     let mut world = world();
     world.objects = vec![
         Rc::new(floor),
-        Rc::new(middle),
-        Rc::new(left),
-        Rc::new(right),
+        Rc::new(top),
+        Rc::new(leg1),
+        Rc::new(leg2),
+        Rc::new(leg3),
+        Rc::new(leg4),
     ];
     world.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
 

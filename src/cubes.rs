@@ -24,7 +24,7 @@ fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
     let (tmin, tmax) = if direction.abs() >= EPSILON {
         (tmin_numerator / direction, tmax_numerator / direction)
     } else {
-        let inifinity: f64 = 10e10;
+        let inifinity: f64 = 10e100;
         (tmin_numerator * inifinity, tmax_numerator * inifinity)
     };
 
@@ -50,7 +50,10 @@ impl Shape for Cube {
     }
     fn local_normal_at(&self, point: Tuple) -> Tuple {
         let comps = [point.x.abs(), point.y.abs(), point.z.abs()];
-        let maxc = *comps .iter() .max_by(|a, b| a.partial_cmp(&b).unwrap()) .unwrap();
+        let maxc = *comps
+            .iter()
+            .max_by(|a, b| a.partial_cmp(&b).unwrap())
+            .unwrap();
 
         if maxc == comps[0] {
             vector(point.x, 0., 0.)
