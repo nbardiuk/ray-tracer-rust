@@ -39,15 +39,24 @@ impl World {
         self.light_sources
             .iter()
             .map(|light| {
-                comps.object.material().lighting(
+                let material = comps.object.material();
+
+                let (refl, refr) = if material.reflective > 0. && material.transparency > 0. {
+                    let reflectance = comps.schlick();
+                    (reflectance, 1. - reflectance)
+                } else {
+                    (1., 1.)
+                };
+
+                return material.lighting(
                     comps.object.clone(),
                     light,
                     &comps.over_point,
                     &comps.eyev,
                     &comps.normalv,
                     self.is_shadowed(light, &comps.over_point),
-                ) + self.reflected_color(&comps, remaining)
-                    + self.refracted_color(&comps, remaining)
+                ) + self.reflected_color(&comps, remaining) * refl
+                    + self.refracted_color(&comps, remaining) * refr;
             })
             .fold(color(0., 0., 0.), |acc, color| acc + color)
     }
@@ -481,5 +490,31 @@ pub mod spec {
         let c = w.shade_hit(comps, 5);
 
         assert_eq!(c, color(0.93642, 0.68642, 0.68642));
+    }
+
+    #[test]
+    fn shade_hit_with_a_reflective_transparent_material() {
+        let mut floor = plane();
+        floor.transform = translation(0., -1., 0.);
+        floor.material.reflective = 0.5;
+        floor.material.transparency = 0.5;
+        floor.material.refractive_index = 1.5;
+        let floor = Rc::new(floor);
+        let mut ball = sphere();
+        ball.material.color = color(1., 0., 0.);
+        ball.material.ambient = 0.5;
+        ball.transform = translation(0., -3.5, -0.5);
+        let ball = Rc::new(ball);
+        let mut w = default_world();
+        w.objects.push(floor.clone());
+        w.objects.push(ball.clone());
+        let sq2 = 2_f64.sqrt();
+        let r = ray(point(0., 0., -3.), vector(0., -sq2 / 2., sq2 / 2.));
+        let xs = vec![intersection(sq2, floor.clone())];
+
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let c = w.shade_hit(comps, 5);
+
+        assert_eq!(c, color(0.93391, 0.69643, 0.69243));
     }
 }

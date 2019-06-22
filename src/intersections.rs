@@ -46,7 +46,6 @@ pub struct Comps {
 }
 
 impl Comps {
-
     pub fn is_internal_reflection(&self) -> bool {
         // find the ratio of forst index of refraction to the second (Snell's Law)
         let n_ratio = self.n1 / self.n2;
@@ -62,6 +61,21 @@ impl Comps {
         let sin2_t = n_ratio.powi(2) * (1. - cos_i.powi(2));
         let cos_t = (1. - sin2_t).sqrt();
         &self.normalv * (n_ratio * cos_i - cos_t) - &self.eyev * n_ratio
+    }
+
+    pub fn schlick(&self) -> f64 {
+        let mut cos = self.eyev.dot(&self.normalv);
+        if self.n1 > self.n2 {
+            let n = self.n1 / self.n2;
+            let sin2_t = n.powi(2) * (1. - cos.powi(2));
+            if sin2_t > 1. {
+                return 1.;
+            }
+            let cos_t = (1. - sin2_t).sqrt();
+            cos = cos_t;
+        }
+        let r0 = ((self.n1 - self.n2) / (self.n1 + self.n2)).powi(2);
+        return r0 + (1. - r0) * (1. - cos).powi(5);
     }
 }
 
@@ -309,7 +323,50 @@ mod spec {
 
         let comps = xs[0].prepare_computations(&r, &xs);
 
-        assert_that!(comps.under_point.z, gt(EPSILON/2.));
+        assert_that!(comps.under_point.z, gt(EPSILON / 2.));
         assert_that!(comps.under_point.z, gt(comps.point.z));
+    }
+
+    #[test]
+    fn the_schlick_approximation_under_total_internal_reflection() {
+        let shape = Rc::new(glass_sphere());
+        let sq2 = 2.0_f64.sqrt();
+        let r = ray(point(0., 0., sq2 / 2.), vector(0., 1., 0.));
+        let xs = vec![
+            intersection(-sq2 / 2., shape.clone()),
+            intersection(sq2 / 2., shape.clone()),
+        ];
+
+        let comps = xs[1].prepare_computations(&r, &xs);
+        let reflectance = comps.schlick();
+
+        assert_eq!(reflectance, 1.);
+    }
+
+    #[test]
+    fn the_schick_approximation_with_a_perpendicular_viewing_angle() {
+        let shape = Rc::new(glass_sphere());
+        let r = ray(point(0., 0., 0.), vector(0., 1., 0.));
+        let xs = vec![
+            intersection(-1., shape.clone()),
+            intersection(1., shape.clone()),
+        ];
+
+        let comps = xs[1].prepare_computations(&r, &xs);
+        let reflectance = comps.schlick();
+
+        assert_that!(reflectance, close_to(0.04, 1e-5));
+    }
+
+    #[test]
+    fn the_schick_approximation_with_small_angle_and_n2_gt_n1() {
+        let shape = Rc::new(glass_sphere());
+        let r = ray(point(0., 0.99, -2.), vector(0., 0., 1.));
+        let xs = vec![intersection(1.8589, shape.clone())];
+
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let reflectance = comps.schlick();
+
+        assert_that!(reflectance, close_to(0.48873, 1e-5));
     }
 }
