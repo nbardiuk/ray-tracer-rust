@@ -178,6 +178,6 @@ mod spec {
 
         let image = c.render(w);
 
-        assert_that!(image.pixel_at(5, 5), eq(color(0.38066, 0.47583, 0.2855)));
+        assert_eq!(image.pixel_at(5, 5), &color(0.38066, 0.47583, 0.2855));
     }
 }

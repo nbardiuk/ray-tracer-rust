@@ -41,7 +41,7 @@ use sdl2_window::Sdl2Window;
 
 fn main() {
     let (pixel_sender, pixel_reciever) = channel::<(usize, usize, Color)>();
-    let (width, height) = (600, 300);
+    let (width, height) = (500, 400);
 
     thread::spawn(move || {
         let mut floor = plane();
@@ -104,18 +104,24 @@ fn main() {
             canvas.write_pixel(x, y, color);
         }
 
+        let view = window.draw_size();
+        let w = view.width / canvas.width as f64;
+        let h = view.height / canvas.height as f64;
+        let scale = if w < h { w } else { h };
+
         // display rendered pixels
         window.draw_2d(&event, |c, g, _d| {
-            clear([0., 0., 0., 1.], g);
-            let black = color(0., 0., 0.);
+            clear([0.8, 0.8, 0.8, 1.], g);
             for x in 0..canvas.width {
                 for y in 0..canvas.height {
                     let color = canvas.pixel_at(x, y);
-                    if color == black {
-                        continue;
-                    }
                     let col = [color.red as f32, color.green as f32, color.blue as f32, 1.];
-                    rectangle(col, [x as f64, y as f64, 8., 8.], c.transform, g);
+                    rectangle(
+                        col,
+                        [x as f64 * scale, y as f64 * scale, scale, scale],
+                        c.transform,
+                        g,
+                    );
                 }
             }
         });
