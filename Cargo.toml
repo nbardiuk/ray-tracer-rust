@@ -1,7 +1,12 @@
 [package]
 name = "ray-tracer"
 version = "0.1.0"
-authors = ["Nazarii Bardiuk <>"]
+authors = ["Nazarii Bardiuk <nazarii@bardiuk.com>"]
+
+[dependencies]
+rand = "0.6.5"
+piston_window = "0.99.0"
+pistoncore-sdl2_window = "0.62.0"
 
 [dev-dependencies]
 hamcrest2 = "*"

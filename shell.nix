@@ -15,6 +15,10 @@ in
   with nixpkgs;
   stdenv.mkDerivation {
     name = "moz_overlay_shell";
-    buildInputs = [ rust ];
+    buildInputs = [
+      rust
+      pkgconfig
+      SDL2
+    ];
     RUST_SRC_PATH="${rust}/lib/rustlib/src/rust/src";
   }

@@ -2,9 +2,13 @@ use canvas::canvas;
 use canvas::Canvas;
 use matrices::identity_matrix;
 use matrices::Matrix;
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 use rays::ray;
 use rays::Ray;
+use std::sync::mpsc::Sender;
 use tuples::point;
+use tuples::Color;
 use world::World;
 use world::MAX_REFLECTIONS;
 
@@ -73,6 +77,21 @@ impl Camera {
             eprint!("rendering {} \r", (100.0 * x as f64) / (canvas.width as f64))
         }
         canvas
+    }
+
+    pub fn render_async(self: &Camera, world: World, tx: Sender<(usize, usize, Color)>) -> () {
+        let mut vec: Vec<usize> = (0..self.hsize * self.vsize).collect();
+        vec.shuffle(&mut thread_rng());
+        for i in vec {
+            let x = i % self.hsize;
+            let y = i / self.hsize;
+            let ray = self.ray_for_pixel(x, y);
+            let color = world.color_at(&ray, MAX_REFLECTIONS);
+            if let Err(_msg) = tx.send((x, y, color)) {
+                // receiver dropped the handle
+                break;
+            }
+        }
     }
 }
 
