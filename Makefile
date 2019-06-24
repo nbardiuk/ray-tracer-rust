@@ -2,7 +2,7 @@ default: clean test render
 
 .PHONY: render
 render:
-	cargo run --release
+	cargo watch -x 'run --release'
 
 .PHONY: test
 test:
