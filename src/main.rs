@@ -35,6 +35,7 @@ use patterns::Pattern;
 use planes::plane;
 use spheres::sphere;
 use std::f64::consts::PI;
+use std::fs;
 use std::rc::Rc;
 use std::sync::mpsc::channel;
 use std::thread;
@@ -120,6 +121,14 @@ fn main() {
         // store newly rendered pixels
         while let Ok((x, y, color)) = pixel_reciever.try_recv() {
             canvas.write_pixel(x, y, color);
+        }
+        if let Some(Button::Keyboard(key)) = event.press_args() {
+            match key {
+                Key::S => {
+                    fs::write("./canvas.ppm", canvas.to_ppm()).expect("Unable to write file");
+                }
+                _ => {}
+            };
         }
 
         let view = window.draw_size();
