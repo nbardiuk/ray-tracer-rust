@@ -23,31 +23,29 @@ pub struct Cylinder {
 }
 
 fn check_cap(ray: &Ray, t: f64) -> bool {
-    let direction_n = ray.direction.normalized();
-    let x = ray.origin.x + t * direction_n.x;
-    let z = ray.origin.z + t * direction_n.z;
+    let x = ray.origin.x + t * ray.direction.x;
+    let z = ray.origin.z + t * ray.direction.z;
     x.powi(2) + z.powi(2) <= 1.
 }
 impl Cylinder {
     fn intersect_caps(&self, rc: Rc<Shape>, ray: &Ray) -> Vec<Intersection> {
-        let direction_n = ray.direction.normalized();
-        if !self.closed || direction_n.y.abs() < EPSILON {
+        if !self.closed || ray.direction.y.abs() < EPSILON {
             vec![]
         } else {
             vec![self.minimum, self.maximum]
                 .into_iter()
-                .map(|m| (m - ray.origin.y) / direction_n.y)
+                .map(|m| (m - ray.origin.y) / ray.direction.y)
                 .filter(|t| check_cap(ray, *t))
                 .map(|t| intersection(t, rc.clone()))
                 .collect()
         }
     }
     fn intersect_sides(&self, rc: Rc<Shape>, ray: &Ray) -> Vec<Intersection> {
-        let direction_n = ray.direction.normalized();
-
-        let dx = direction_n.x;
-        let dz = direction_n.z;
+        let dx = ray.direction.x;
+        let dy = ray.direction.y;
+        let dz = ray.direction.z;
         let ox = ray.origin.x;
+        let oy = ray.origin.y;
         let oz = ray.origin.z;
 
         let a = dx.powi(2) + dz.powi(2);
@@ -64,7 +62,7 @@ impl Cylinder {
             ]
             .into_iter()
             .filter(|t| {
-                let y = ray.origin.y + t * direction_n.y;
+                let y = oy + t * dy;
                 self.minimum < y && y < self.maximum
             })
             .map(|t| intersection(t, rc.clone()))
@@ -129,7 +127,7 @@ mod spec {
             (point(0., 0., 0.), vector(0., 1., 0.)),
             (point(0., 0., -5.), vector(1., 1., 1.)),
         ] {
-            let xs = cyl.local_intersects(cyl.clone(), ray(origin, direction));
+            let xs = cyl.local_intersects(cyl.clone(), ray(origin, direction.normalized()));
 
             assert_eq!(xs.len(), 0);
         }
@@ -142,7 +140,7 @@ mod spec {
             (point(0., 0., -5.), vector(0., 0., 1.), 4., 6.),
             (point(0.5, 0., -5.), vector(0.1, 1., 1.), 6.80798, 7.08872),
         ] {
-            let xs = cyl.local_intersects(cyl.clone(), ray(origin, direction));
+            let xs = cyl.local_intersects(cyl.clone(), ray(origin, direction.normalized()));
 
             assert_eq!(xs.len(), 2);
             assert_that!(xs[0].t, close_to(t0, 10e-5));
@@ -175,7 +173,7 @@ mod spec {
             (point(0., 1., -5.), vector(0., 0., 1.), 0),
             (point(0., 1.5, -2.), vector(0., 0., 1.), 2),
         ] {
-            let xs = cyl.local_intersects(cyl.clone(), ray(origin, direction));
+            let xs = cyl.local_intersects(cyl.clone(), ray(origin, direction.normalized()));
 
             assert_eq!(xs.len(), count);
         }
@@ -194,7 +192,7 @@ mod spec {
             (point(0., 0., -2.), vector(0., 1., 2.), 2),
             (point(0., -1., -2.), vector(0., 1., 1.), 2),
         ] {
-            let xs = cyl.local_intersects(cyl.clone(), ray(origin, direction));
+            let xs = cyl.local_intersects(cyl.clone(), ray(origin, direction.normalized()));
 
             assert_eq!(xs.len(), count);
         }

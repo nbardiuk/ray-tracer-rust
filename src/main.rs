@@ -1,5 +1,6 @@
 mod camera;
 mod canvas;
+mod cones;
 mod cubes;
 mod cylinders;
 mod intersections;
@@ -26,9 +27,13 @@ extern crate hamcrest2;
 
 use camera::camera;
 use canvas::canvas;
+use cones::cone;
 use cylinders::cylinder;
 use lights::point_light;
+use patterns::checkers_pattern;
+use patterns::Pattern;
 use planes::plane;
+use spheres::sphere;
 use std::f64::consts::PI;
 use std::rc::Rc;
 use std::sync::mpsc::channel;
@@ -42,36 +47,60 @@ use sdl2_window::Sdl2Window;
 
 fn main() {
     let (pixel_sender, pixel_reciever) = channel::<(usize, usize, Color)>();
-    let (width, height) = (500, 300);
+    let (width, height) = (500, 400);
 
     thread::spawn(move || {
         let mut floor = plane();
         floor.transform = scaling(10., 0.01, 10.);
         floor.material.reflective = 0.6;
-        floor.material.color = color(0.5, 0.3, 0.1);
+        floor.material.color = color(0.5, 0.5, 0.5);
 
-        let mut pill = cylinder();
-        pill.minimum = -1.;
-        pill.maximum = 1.;
-        pill.closed = true;
-        pill.transform =
-            translation(-3., 2., 7.) * rotation_y(-0.5) * rotation_x(-0.4) * rotation_z(0.8);
-        pill.material.color = color(0., 1., 1.);
+        let mut ice = sphere();
+        ice.transform = translation(0., 2.1, -1.) * scaling(0.91, 0.91, 0.91);
 
-        let mut tube = cylinder();
-        tube.minimum = -1.;
-        tube.maximum = 1.;
-        tube.transform =
-            translation(3., 2., 7.) * rotation_y(-0.5) * rotation_x(-0.4) * rotation_z(0.8);
-        tube.material.color = color(1., 1., 1.);
+        let mut waffle = checkers_pattern(color(1., 0.9, 0.1), color(0.8, 0.7, 0.1));
+        waffle.set_transform(scaling(0.03, 0.02, 0.01));
+
+        let mut cone = cone();
+        cone.maximum = 1.;
+        cone.minimum = 0.;
+        cone.closed = true;
+        cone.transform = translation(0., 0., -1.) * scaling(1., 2., 1.);
+        cone.material.pattern = Some(Box::new(waffle));
+        cone.material.shininess = 100.;
+
+        let mut cup = cylinder();
+        cup.maximum = 1.5;
+        cup.minimum = 0.;
+        cup.material.reflective = 0.5;
+        cup.material.transparency = 1.;
+        cup.material.refractive_index = 1.5;
+        cup.material.color = color(0.2, 0.2, 0.2);
+        cup.transform = translation(0.12, 0., -1.);
+
+        let mut cup_bot = cylinder();
+        cup_bot.maximum = 0.1;
+        cup_bot.minimum = 0.;
+        cup_bot.closed = true;
+        cup_bot.material.reflective = 0.5;
+        cup_bot.material.transparency = 1.;
+        cup_bot.material.refractive_index = 1.5;
+        cup_bot.material.color = color(0.2, 0.2, 0.2);
+        cup_bot.transform = translation(0.12, 0., -1.);
 
         let mut world = world();
-        world.objects = vec![Rc::new(floor), Rc::new(pill), Rc::new(tube)];
+        world.objects = vec![
+            Rc::new(floor),
+            Rc::new(ice),
+            Rc::new(cone),
+            Rc::new(cup),
+            Rc::new(cup_bot),
+        ];
         world.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
 
         let mut camera = camera(width, height, PI / 3.);
         camera.transform = view_transform(
-            &point(0., 1.5, -5.),
+            &point(0., 4., -10.),
             &point(0., 1., 0.),
             &vector(0., 1., 0.),
         );

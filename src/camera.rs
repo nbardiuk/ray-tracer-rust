@@ -79,7 +79,7 @@ impl Camera {
         canvas
     }
 
-    pub fn render_async(self: &Camera, world: World, tx: Sender<(usize, usize, Color)>) -> () {
+    pub fn render_async(self: &Camera, world: World, pixel_sender: Sender<(usize, usize, Color)>) -> () {
         let mut vec: Vec<usize> = (0..self.hsize * self.vsize).collect();
         vec.shuffle(&mut thread_rng());
         for i in vec {
@@ -87,7 +87,7 @@ impl Camera {
             let y = i / self.hsize;
             let ray = self.ray_for_pixel(x, y);
             let color = world.color_at(&ray, MAX_REFLECTIONS);
-            if let Err(_msg) = tx.send((x, y, color)) {
+            if let Err(_msg) = pixel_sender.send((x, y, color)) {
                 // receiver dropped the handle
                 break;
             }
