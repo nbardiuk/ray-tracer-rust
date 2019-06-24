@@ -251,7 +251,7 @@ mod spec {
     fn the_hit_should_offset_the_point() {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let mut shape = sphere();
-        shape.transform = translation(0., 0., 1.);
+        shape.invtransform = translation(0., 0., 1.).inverse();
         let i = intersection(5., Rc::new(shape));
 
         let comps = i.prepare_computations(&r, &[]);
@@ -275,15 +275,15 @@ mod spec {
     #[test]
     fn finding_n1_and_n2_at_various_intersections() {
         let mut a = glass_sphere();
-        a.set_transform(scaling(2., 2., 2.));
+        a.set_invtransform(scaling(2., 2., 2.).inverse());
         a.material.refractive_index = 1.5;
         let a = Rc::new(a);
         let mut b = glass_sphere();
-        b.set_transform(translation(0., 0., -0.25));
+        b.set_invtransform(translation(0., 0., -0.25).inverse());
         b.material.refractive_index = 2.0;
         let b = Rc::new(b);
         let mut c = glass_sphere();
-        c.set_transform(translation(0., 0., 0.25));
+        c.set_invtransform(translation(0., 0., 0.25).inverse());
         c.material.refractive_index = 2.5;
         let c = Rc::new(c);
         let r = ray(point(0., 0., -4.), vector(0., 0., 1.));
@@ -316,7 +316,7 @@ mod spec {
     fn the_under_point_is_offset_below_the_surface() {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let mut shape = glass_sphere();
-        shape.transform = translation(0., 0., 1.);
+        shape.invtransform = translation(0., 0., 1.).inverse();
         let shape = Rc::new(shape);
         let i = intersection(5., shape.clone());
         let xs = vec![i];

@@ -9,34 +9,34 @@ pub trait Shape {
     fn material(&self) -> &Material;
     fn set_material(&mut self, material: Material);
 
-    fn transform(&self) -> &Matrix;
-    fn set_transform(&mut self, transform: Matrix);
+    fn invtransform(&self) -> &Matrix;
+    fn set_invtransform(&mut self, invtransform: Matrix);
 
     fn local_normal_at(&self, local_point: Tuple) -> Tuple;
     fn normal_at(&self, world_point: &Tuple) -> Tuple {
-        let local_point = &self.transform().inverse() * world_point;
+        let local_point = self.invtransform() * world_point;
         let local_normal = self.local_normal_at(local_point);
-        let mut world_normal = self.transform().inverse().transpose() * local_normal;
+        let mut world_normal = self.invtransform().transpose() * local_normal;
         world_normal.w = 0.;
         world_normal.normalized()
     }
 
     fn local_intersects(&self, rc: Rc<Shape>, local_ray: Ray) -> Vec<Intersection>;
     fn intersects(&self, rc: Rc<Shape>, inray: &Ray) -> Vec<Intersection> {
-        let local_ray = inray.transform(self.transform().inverse());
+        let local_ray = inray.transform(self.invtransform());
         self.local_intersects(rc, local_ray)
     }
 }
 
 impl std::fmt::Debug for Shape {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Shape ({:?}, {:?})", self.material(), self.transform())
+        write!(f, "Shape ({:?}, {:?})", self.material(), self.invtransform())
     }
 }
 
 impl PartialEq<Shape> for Shape {
     fn eq(&self, shape: &Shape) -> bool {
-        self.material().eq(shape.material()) && self.transform().eq(shape.transform())
+        self.material().eq(shape.material()) && self.invtransform().eq(shape.invtransform())
     }
 }
 
@@ -57,7 +57,7 @@ mod spec {
 
     #[derive(Debug, PartialEq)]
     struct TestShape {
-        transform: Matrix,
+        invtransform: Matrix,
         material: Material,
     }
     impl Shape for TestShape {
@@ -67,11 +67,11 @@ mod spec {
         fn set_material(&mut self, material: Material) {
             self.material = material;
         }
-        fn transform(&self) -> &Matrix {
-            &self.transform
+        fn invtransform(&self) -> &Matrix {
+            &self.invtransform
         }
-        fn set_transform(&mut self, transform: Matrix) {
-            self.transform = transform;
+        fn set_invtransform(&mut self, invtransform: Matrix) {
+            self.invtransform = invtransform;
         }
         fn local_intersects(&self, _rc: Rc<Shape>, _local_ray: Ray) -> Vec<Intersection> {
             vec![]
@@ -82,7 +82,7 @@ mod spec {
     }
     fn test_shape() -> TestShape {
         TestShape {
-            transform: identity_matrix(),
+            invtransform: identity_matrix(),
             material: material(),
         }
     }
@@ -91,16 +91,16 @@ mod spec {
     fn the_default_transformation() {
         let s = test_shape();
 
-        assert_eq!(s.transform(), &identity_matrix());
+        assert_eq!(s.invtransform(), &identity_matrix());
     }
 
     #[test]
     fn assiging_a_transformation() {
         let mut s = test_shape();
 
-        s.set_transform(translation(2., 3., 4.));
+        s.set_invtransform(translation(2., 3., 4.));
 
-        assert_eq!(s.transform(), &translation(2., 3., 4.));
+        assert_eq!(s.invtransform(), &translation(2., 3., 4.));
     }
 
     #[test]
@@ -126,7 +126,7 @@ mod spec {
     #[test]
     fn computing_the_normal_on_a_translated_shape() {
         let mut s = test_shape();
-        s.transform = translation(0., 1., 0.);
+        s.invtransform = translation(0., 1., 0.).inverse();
 
         let n = s.normal_at(&point(0., 1.70711, -0.70711));
 
@@ -136,7 +136,7 @@ mod spec {
     #[test]
     fn computing_the_normal_on_a_transformed_sphere() {
         let mut s = test_shape();
-        s.transform = scaling(1., 0.5, 1.) * rotation_z(PI / 5.);
+        s.invtransform = (scaling(1., 0.5, 1.) * rotation_z(PI / 5.)).inverse();
 
         let a = 2_f64.sqrt() / 2.;
         let n = s.normal_at(&point(0., a, -a));

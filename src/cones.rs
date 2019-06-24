@@ -15,7 +15,7 @@ use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Cone {
-    pub transform: Matrix,
+    pub invtransform: Matrix,
     pub material: Material,
     pub minimum: f64,
     pub maximum: f64,
@@ -86,11 +86,11 @@ impl Shape for Cone {
     fn set_material(&mut self, material: Material) {
         self.material = material;
     }
-    fn transform(&self) -> &Matrix {
-        &self.transform
+    fn invtransform(&self) -> &Matrix {
+        &self.invtransform
     }
-    fn set_transform(&mut self, transform: Matrix) {
-        self.transform = transform;
+    fn set_invtransform(&mut self, invtransform: Matrix) {
+        self.invtransform = invtransform;
     }
     fn local_normal_at(&self, point: Tuple) -> Tuple {
         let dist = point.x.powi(2) + point.z.powi(2);
@@ -112,10 +112,10 @@ impl Shape for Cone {
 }
 pub fn cone() -> Cone {
     let material = material();
-    let transform = identity_matrix();
+    let invtransform = identity_matrix();
     Cone {
         material,
-        transform,
+        invtransform,
         minimum: NEG_INFINITY,
         maximum: INFINITY,
         closed: false,

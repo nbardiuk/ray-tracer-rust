@@ -13,7 +13,7 @@ use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Cube {
-    pub transform: Matrix,
+    pub invtransform: Matrix,
     pub material: Material,
 }
 
@@ -42,11 +42,11 @@ impl Shape for Cube {
     fn set_material(&mut self, material: Material) {
         self.material = material;
     }
-    fn transform(&self) -> &Matrix {
-        &self.transform
+    fn invtransform(&self) -> &Matrix {
+        &self.invtransform
     }
-    fn set_transform(&mut self, transform: Matrix) {
-        self.transform = transform;
+    fn set_invtransform(&mut self, invtransform: Matrix) {
+        self.invtransform = invtransform;
     }
     fn local_normal_at(&self, point: Tuple) -> Tuple {
         let comps = [point.x.abs(), point.y.abs(), point.z.abs()];
@@ -91,10 +91,10 @@ impl Shape for Cube {
 
 pub fn cube() -> Cube {
     let material = material();
-    let transform = identity_matrix();
+    let invtransform = identity_matrix();
     Cube {
         material,
-        transform,
+        invtransform,
     }
 }
 

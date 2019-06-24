@@ -11,13 +11,13 @@ use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Sphere {
-    pub transform: Matrix,
+    pub invtransform: Matrix,
     pub material: Material,
 }
 
 pub fn sphere() -> Sphere {
     Sphere {
-        transform: identity_matrix(),
+        invtransform: identity_matrix(),
         material: material(),
     }
 }
@@ -36,11 +36,11 @@ impl Shape for Sphere {
     fn set_material(&mut self, material: Material) {
         self.material = material;
     }
-    fn transform(&self) -> &Matrix {
-        &self.transform
+    fn invtransform(&self) -> &Matrix {
+        &self.invtransform
     }
-    fn set_transform(&mut self, transform: Matrix) {
-        self.transform = transform;
+    fn set_invtransform(&mut self, invtransform: Matrix) {
+        self.invtransform = invtransform;
     }
     fn local_normal_at(&self, local_point: Tuple) -> Tuple {
         local_point - point(0., 0., 0.)
@@ -66,7 +66,7 @@ impl Shape for Sphere {
 
 impl PartialEq<Sphere> for Shape {
     fn eq(&self, other: &Sphere) -> bool {
-        self.material().eq(other.material()) && self.transform().eq(other.transform())
+        self.material().eq(other.material()) && self.invtransform().eq(other.invtransform())
     }
 }
 
@@ -151,7 +151,7 @@ mod spec {
     fn intersection_a_scaled_sphere_with_a_ray() {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let mut s = sphere();
-        s.transform = scaling(2., 2., 2.);
+        s.invtransform = scaling(2., 2., 2.).inverse();
         let rc = Rc::new(s);
 
         let xs = rc.intersects(rc.clone(), &r);
@@ -165,7 +165,7 @@ mod spec {
     fn intersection_a_translated_sphere_with_a_ray() {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let mut s = sphere();
-        s.transform = translation(5., 0., 0.);
+        s.invtransform = translation(5., 0., 0.).inverse();
         let rc = Rc::new(s);
 
         let xs = rc.intersects(rc.clone(), &r);
@@ -214,7 +214,7 @@ mod spec {
     fn a_helper_for_producing_a_sphere_with_a_glassy_material() {
         let s = glass_sphere();
 
-        assert_eq!(s.transform, identity_matrix());
+        assert_eq!(s.invtransform, identity_matrix());
         assert_eq!(s.material.transparency, 1.0);
         assert_eq!(s.material.refractive_index, 1.5);
     }

@@ -6,26 +6,26 @@ use tuples::Color;
 use tuples::Tuple;
 
 pub trait Pattern {
-    fn transform(&self) -> &Matrix;
-    fn set_transform(&mut self, transform: Matrix);
+    fn invtransform(&self) -> &Matrix;
+    fn set_invtransform(&mut self, invtransform: Matrix);
 
     fn at(&self, point: &Tuple) -> Color;
     fn at_shape(&self, shape: Rc<Shape>, world_point: &Tuple) -> Color {
-        let shape_point = (&shape.transform().inverse()) * world_point;
-        let pattern_point = self.transform().inverse() * shape_point;
+        let shape_point = shape.invtransform() * world_point;
+        let pattern_point = self.invtransform() * &shape_point;
         self.at(&pattern_point)
     }
 }
 
 impl std::fmt::Debug for Pattern {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Pattern ({:?})", self.transform())
+        write!(f, "Pattern ({:?})", self.invtransform())
     }
 }
 
 impl PartialEq<Pattern> for Pattern {
     fn eq(&self, other: &Pattern) -> bool {
-        self.transform().eq(other.transform())
+        self.invtransform().eq(other.invtransform())
     }
 }
 
@@ -33,16 +33,16 @@ impl PartialEq<Pattern> for Pattern {
 pub struct Stripe {
     a: Color,
     b: Color,
-    transform: Matrix,
+    invtransform: Matrix,
 }
 
 impl Pattern for Stripe {
-    fn transform(&self) -> &Matrix {
-        &self.transform
+    fn invtransform(&self) -> &Matrix {
+        &self.invtransform
     }
 
-    fn set_transform(&mut self, transform: Matrix) {
-        self.transform = transform;
+    fn set_invtransform(&mut self, invtransform: Matrix) {
+        self.invtransform = invtransform;
     }
 
     fn at(&self, point: &Tuple) -> Color {
@@ -54,23 +54,23 @@ impl Pattern for Stripe {
     }
 }
 pub fn stripe_pattern(a: Color, b: Color) -> Stripe {
-    let transform = identity_matrix();
-    Stripe { a, b, transform }
+    let invtransform = identity_matrix();
+    Stripe { a, b, invtransform }
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Gradient {
     a: Color,
     b: Color,
-    transform: Matrix,
+    invtransform: Matrix,
 }
 impl Pattern for Gradient {
-    fn transform(&self) -> &Matrix {
-        &self.transform
+    fn invtransform(&self) -> &Matrix {
+        &self.invtransform
     }
 
-    fn set_transform(&mut self, transform: Matrix) {
-        self.transform = transform;
+    fn set_invtransform(&mut self, invtransform: Matrix) {
+        self.invtransform = invtransform;
     }
 
     fn at(&self, point: &Tuple) -> Color {
@@ -80,23 +80,23 @@ impl Pattern for Gradient {
     }
 }
 pub fn gradient_pattern(a: Color, b: Color) -> Gradient {
-    let transform = identity_matrix();
-    Gradient { a, b, transform }
+    let invtransform = identity_matrix();
+    Gradient { a, b, invtransform }
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Ring {
     a: Color,
     b: Color,
-    transform: Matrix,
+    invtransform: Matrix,
 }
 impl Pattern for Ring {
-    fn transform(&self) -> &Matrix {
-        &self.transform
+    fn invtransform(&self) -> &Matrix {
+        &self.invtransform
     }
 
-    fn set_transform(&mut self, transform: Matrix) {
-        self.transform = transform;
+    fn set_invtransform(&mut self, invtransform: Matrix) {
+        self.invtransform = invtransform;
     }
 
     fn at(&self, point: &Tuple) -> Color {
@@ -108,23 +108,23 @@ impl Pattern for Ring {
     }
 }
 pub fn ring_pattern(a: Color, b: Color) -> Ring {
-    let transform = identity_matrix();
-    Ring { a, b, transform }
+    let invtransform = identity_matrix();
+    Ring { a, b, invtransform }
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Checkers {
     a: Color,
     b: Color,
-    transform: Matrix,
+    invtransform: Matrix,
 }
 impl Pattern for Checkers {
-    fn transform(&self) -> &Matrix {
-        &self.transform
+    fn invtransform(&self) -> &Matrix {
+        &self.invtransform
     }
 
-    fn set_transform(&mut self, transform: Matrix) {
-        self.transform = transform;
+    fn set_invtransform(&mut self, invtransform: Matrix) {
+        self.invtransform = invtransform;
     }
 
     fn at(&self, point: &Tuple) -> Color {
@@ -136,8 +136,8 @@ impl Pattern for Checkers {
     }
 }
 pub fn checkers_pattern(a: Color, b: Color) -> Checkers {
-    let transform = identity_matrix();
-    Checkers { a, b, transform }
+    let invtransform = identity_matrix();
+    Checkers { a, b, invtransform }
 }
 
 #[cfg(test)]
@@ -158,15 +158,15 @@ pub mod spec {
     }
 
     pub struct TestPattern {
-        transform: Matrix,
+        invtransform: Matrix,
     }
     impl Pattern for TestPattern {
-        fn transform(&self) -> &Matrix {
-            &self.transform
+        fn invtransform(&self) -> &Matrix {
+            &self.invtransform
         }
 
-        fn set_transform(&mut self, transform: Matrix) {
-            self.transform = transform;
+        fn set_invtransform(&mut self, invtransform: Matrix) {
+            self.invtransform = invtransform;
         }
 
         fn at(&self, point: &Tuple) -> Color {
@@ -174,8 +174,8 @@ pub mod spec {
         }
     }
     pub fn test_pattern() -> TestPattern {
-        let transform = identity_matrix();
-        TestPattern { transform }
+        let invtransform = identity_matrix();
+        TestPattern { invtransform }
     }
 
     #[test]
@@ -218,7 +218,7 @@ pub mod spec {
     #[test]
     fn a_pattern_with_an_object_transformation() {
         let mut object = sphere();
-        object.transform = scaling(2., 2., 2.);
+        object.invtransform = scaling(2., 2., 2.).inverse();
         let pattern = test_pattern();
 
         let c = pattern.at_shape(Rc::new(object), &point(2., 3., 4.));
@@ -230,7 +230,7 @@ pub mod spec {
     fn a_pattern_with_a_pattern_transformation() {
         let object = sphere();
         let mut pattern = test_pattern();
-        pattern.set_transform(scaling(2., 2., 2.));
+        pattern.set_invtransform(scaling(2., 2., 2.).inverse());
 
         let c = pattern.at_shape(Rc::new(object), &point(2., 3., 4.));
 
@@ -240,9 +240,9 @@ pub mod spec {
     #[test]
     fn a_pattern_with_both_an_object_and_a_pattern_transformation() {
         let mut object = sphere();
-        object.transform = scaling(2., 2., 2.);
+        object.invtransform = scaling(2., 2., 2.).inverse();
         let mut pattern = test_pattern();
-        pattern.set_transform(translation(0.5, 1., 1.5));
+        pattern.set_invtransform(translation(0.5, 1., 1.5).inverse());
 
         let c = pattern.at_shape(Rc::new(object), &point(2.5, 3., 3.5));
 

@@ -15,7 +15,7 @@ use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Cylinder {
-    pub transform: Matrix,
+    pub invtransform: Matrix,
     pub material: Material,
     pub minimum: f64,
     pub maximum: f64,
@@ -78,11 +78,11 @@ impl Shape for Cylinder {
     fn set_material(&mut self, material: Material) {
         self.material = material;
     }
-    fn transform(&self) -> &Matrix {
-        &self.transform
+    fn invtransform(&self) -> &Matrix {
+        &self.invtransform
     }
-    fn set_transform(&mut self, transform: Matrix) {
-        self.transform = transform;
+    fn set_invtransform(&mut self, invtransform: Matrix) {
+        self.invtransform = invtransform;
     }
     fn local_normal_at(&self, point: Tuple) -> Tuple {
         let dist = point.x.powi(2) + point.z.powi(2);
@@ -102,10 +102,10 @@ impl Shape for Cylinder {
 }
 pub fn cylinder() -> Cylinder {
     let material = material();
-    let transform = identity_matrix();
+    let invtransform = identity_matrix();
     Cylinder {
         material,
-        transform,
+        invtransform,
         minimum: NEG_INFINITY,
         maximum: INFINITY,
         closed: false,

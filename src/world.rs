@@ -123,7 +123,7 @@ pub mod spec {
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
         let mut s2 = sphere();
-        s2.transform = scaling(0.5, 0.5, 0.5);
+        s2.invtransform = scaling(0.5, 0.5, 0.5).inverse();
         World {
             objects: vec![Rc::new(s1), Rc::new(s2)],
             light_sources: vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))],
@@ -145,7 +145,7 @@ pub mod spec {
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
         let mut s2 = sphere();
-        s2.transform = scaling(0.5, 0.5, 0.5);
+        s2.invtransform = scaling(0.5, 0.5, 0.5).inverse();
         let rc1 = Rc::new(s1);
         let rc2 = Rc::new(s2);
 
@@ -203,7 +203,7 @@ pub mod spec {
         w.light_sources = vec![point_light(point(0., 0., -10.), color(1., 1., 1.))];
         let s1 = sphere();
         let mut s2 = sphere();
-        s2.transform = translation(0., 0., 10.);
+        s2.invtransform = translation(0., 0., 10.).inverse();
         let s2rc = Rc::new(s2);
         w.objects.append(&mut vec![Rc::new(s1), s2rc.clone()]);
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
@@ -243,7 +243,7 @@ pub mod spec {
         s1.material.specular = 0.2;
         s1.material.ambient = 1.;
         let mut s2 = sphere();
-        s2.transform = scaling(0.5, 0.5, 0.5);
+        s2.invtransform = scaling(0.5, 0.5, 0.5).inverse();
         s2.material.ambient = 1.;
         let mut w = world();
         w.objects = vec![Rc::new(s1), Rc::new(s2)];
@@ -291,7 +291,7 @@ pub mod spec {
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
         let mut s2 = sphere();
-        s2.transform = scaling(0.5, 0.5, 0.5);
+        s2.invtransform = scaling(0.5, 0.5, 0.5).inverse();
         s2.material.ambient = 1.;
         let shape = Rc::new(s2);
         let w = World {
@@ -310,7 +310,7 @@ pub mod spec {
     fn the_reflected_color_for_a_reflective_material() {
         let mut shape = plane();
         shape.material.reflective = 0.5;
-        shape.transform = translation(0., -1., 0.);
+        shape.invtransform = translation(0., -1., 0.).inverse();
         let s = Rc::new(shape);
         let mut w = default_world();
         w.objects.push(s.clone());
@@ -328,7 +328,7 @@ pub mod spec {
     fn shade_hit_with_a_reflective_material() {
         let mut shape = plane();
         shape.material.reflective = 0.5;
-        shape.transform = translation(0., -1., 0.);
+        shape.invtransform = translation(0., -1., 0.).inverse();
         let s = Rc::new(shape);
         let mut w = default_world();
         w.objects.push(s.clone());
@@ -346,10 +346,10 @@ pub mod spec {
     fn color_at_with_mutually_reflective_surfaces() {
         let mut lower = plane();
         lower.material.reflective = 1.;
-        lower.transform = translation(0., -1., 0.);
+        lower.invtransform = translation(0., -1., 0.).inverse();
         let mut upper = plane();
         upper.material.reflective = 1.;
-        upper.transform = translation(0., 1., 0.);
+        upper.invtransform = translation(0., 1., 0.).inverse();
         let mut w = world();
         w.light_sources = vec![point_light(point(0., 0., 0.), color(1., 1., 1.))];
         w.objects = vec![Rc::new(lower), Rc::new(upper)];
@@ -362,7 +362,7 @@ pub mod spec {
     fn the_reflected_color_at_maximum_recursive_depth() {
         let mut shape = plane();
         shape.material.reflective = 0.5;
-        shape.transform = translation(0., -1., 0.);
+        shape.invtransform = translation(0., -1., 0.).inverse();
         let s = Rc::new(shape);
         let mut w = default_world();
         w.objects.push(s.clone());
@@ -446,7 +446,7 @@ pub mod spec {
         a.material.pattern = Some(Box::new(test_pattern()));
         let a = Rc::new(a);
         let mut b = sphere();
-        b.transform = scaling(0.5, 0.5, 0.5);
+        b.invtransform = scaling(0.5, 0.5, 0.5).inverse();
         b.material.transparency = 1.;
         b.material.refractive_index = 1.5;
         let b = Rc::new(b);
@@ -470,14 +470,14 @@ pub mod spec {
     #[test]
     fn shade_hit_with_a_transparent_material() {
         let mut floor = plane();
-        floor.transform = translation(0., -1., 0.);
+        floor.invtransform = translation(0., -1., 0.).inverse();
         floor.material.transparency = 0.5;
         floor.material.refractive_index = 1.5;
         let floor = Rc::new(floor);
         let mut ball = sphere();
         ball.material.color = color(1., 0., 0.);
         ball.material.ambient = 0.5;
-        ball.transform = translation(0., -3.5, -0.5);
+        ball.invtransform = translation(0., -3.5, -0.5).inverse();
         let ball = Rc::new(ball);
         let mut w = default_world();
         w.objects.push(floor.clone());
@@ -495,7 +495,7 @@ pub mod spec {
     #[test]
     fn shade_hit_with_a_reflective_transparent_material() {
         let mut floor = plane();
-        floor.transform = translation(0., -1., 0.);
+        floor.invtransform = translation(0., -1., 0.).inverse();
         floor.material.reflective = 0.5;
         floor.material.transparency = 0.5;
         floor.material.refractive_index = 1.5;
@@ -503,7 +503,7 @@ pub mod spec {
         let mut ball = sphere();
         ball.material.color = color(1., 0., 0.);
         ball.material.ambient = 0.5;
-        ball.transform = translation(0., -3.5, -0.5);
+        ball.invtransform = translation(0., -3.5, -0.5).inverse();
         let ball = Rc::new(ball);
         let mut w = default_world();
         w.objects.push(floor.clone());

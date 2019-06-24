@@ -48,25 +48,25 @@ use sdl2_window::Sdl2Window;
 
 fn main() {
     let (pixel_sender, pixel_reciever) = channel::<(usize, usize, Color)>();
-    let (width, height) = (500, 400);
+    let (width, height) = (600, 400);
 
     thread::spawn(move || {
         let mut floor = plane();
-        floor.transform = scaling(10., 0.01, 10.);
+        floor.invtransform = scaling(10., 0.01, 10.).inverse();
         floor.material.reflective = 0.6;
         floor.material.color = color(0.5, 0.5, 0.5);
 
         let mut ice = sphere();
-        ice.transform = translation(0., 2.1, -1.) * scaling(0.91, 0.91, 0.91);
+        ice.invtransform = (translation(0., 2.1, -1.) * scaling(0.91, 0.91, 0.91)).inverse();
 
         let mut waffle = checkers_pattern(color(1., 0.9, 0.1), color(0.8, 0.7, 0.1));
-        waffle.set_transform(scaling(0.03, 0.02, 0.01));
+        waffle.set_invtransform(scaling(0.03, 0.02, 0.01).inverse());
 
         let mut cone = cone();
         cone.maximum = 1.;
         cone.minimum = 0.;
         cone.closed = true;
-        cone.transform = translation(0., 0., -1.) * scaling(1., 2., 1.);
+        cone.invtransform = (translation(0., 0., -1.) * scaling(1., 2., 1.)).inverse();
         cone.material.pattern = Some(Box::new(waffle));
         cone.material.shininess = 100.;
 
@@ -77,7 +77,7 @@ fn main() {
         cup.material.transparency = 1.;
         cup.material.refractive_index = 1.5;
         cup.material.color = color(0.2, 0.2, 0.2);
-        cup.transform = translation(0.12, 0., -1.);
+        cup.invtransform = translation(0.12, 0., -1.).inverse();
 
         let mut cup_bot = cylinder();
         cup_bot.maximum = 0.1;
@@ -87,7 +87,7 @@ fn main() {
         cup_bot.material.transparency = 1.;
         cup_bot.material.refractive_index = 1.5;
         cup_bot.material.color = color(0.2, 0.2, 0.2);
-        cup_bot.transform = translation(0.12, 0., -1.);
+        cup_bot.invtransform = translation(0.12, 0., -1.).inverse();
 
         let mut world = world();
         world.objects = vec![
@@ -100,11 +100,11 @@ fn main() {
         world.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
 
         let mut camera = camera(width, height, PI / 3.);
-        camera.transform = view_transform(
+        camera.invtransform = view_transform(
             &point(0., 4., -10.),
             &point(0., 1., 0.),
             &vector(0., 1., 0.),
-        );
+        ).inverse();
 
         camera.render_async(world, pixel_sender);
     });

@@ -15,7 +15,7 @@ use world::MAX_REFLECTIONS;
 pub struct Camera {
     hsize: usize,
     vsize: usize,
-    pub transform: Matrix,
+    pub invtransform: Matrix,
     pixel_size: f64,
     half_width: f64,
     half_height: f64,
@@ -37,7 +37,7 @@ pub fn camera(hsize: usize, vsize: usize, field_of_view: f64) -> Camera {
     Camera {
         hsize,
         vsize,
-        transform: identity_matrix(),
+        invtransform: identity_matrix(),
         pixel_size: half_width * 2. / hsize as f64,
         half_height,
         half_width,
@@ -58,9 +58,8 @@ impl Camera {
         // using the camera matrix, transform the canvas point and the origin,
         // and then compute the ray's direction vector.
         // (remember that the canvas is at z = -1)
-        let intransform = self.transform.inverse();
-        let pixel = &intransform * &point(world_x, world_y, -1.);
-        let origin = &intransform * &point(0., 0., 0.);
+        let pixel = &self.invtransform * &point(world_x, world_y, -1.);
+        let origin = &self.invtransform * &point(0., 0., 0.);
         let direction = (&pixel - &origin).normalized();
 
         ray(origin, direction)
@@ -120,7 +119,7 @@ mod spec {
 
         assert_eq!(c.hsize, 160);
         assert_eq!(c.vsize, 120);
-        assert_eq!(c.transform, identity_matrix());
+        assert_eq!(c.invtransform.inverse(), identity_matrix());
     }
 
     #[test]
@@ -158,7 +157,7 @@ mod spec {
     #[test]
     fn constructing_a_ray_when_the_camera_is_transformed() {
         let mut c = camera(201, 101, PI / 2.);
-        c.transform = rotation_y(PI / 4.) * translation(0., -2., 5.);
+        c.invtransform = (rotation_y(PI / 4.) * translation(0., -2., 5.)).inverse();
 
         let r = c.ray_for_pixel(100, 50);
 
@@ -174,7 +173,7 @@ mod spec {
         let from = point(0., 0., -5.);
         let to = point(0., 0., 0.);
         let up = vector(0., 1., 0.);
-        c.transform = view_transform(&from, &to, &up);
+        c.invtransform = view_transform(&from, &to, &up).inverse();
 
         let image = c.render(w);
 

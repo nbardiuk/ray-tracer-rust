@@ -15,7 +15,7 @@ use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Plane {
-    pub transform: Matrix,
+    pub invtransform: Matrix,
     pub material: Material,
 }
 
@@ -26,11 +26,11 @@ impl Shape for Plane {
     fn set_material(&mut self, material: Material) {
         self.material = material;
     }
-    fn transform(&self) -> &Matrix {
-        &self.transform
+    fn invtransform(&self) -> &Matrix {
+        &self.invtransform
     }
-    fn set_transform(&mut self, transform: Matrix) {
-        self.transform = transform;
+    fn set_invtransform(&mut self, invtransform: Matrix) {
+        self.invtransform = invtransform;
     }
     fn local_normal_at(&self, _local_point: Tuple) -> Tuple {
         vector(0., 1., 0.)
@@ -47,14 +47,14 @@ impl Shape for Plane {
 
 impl PartialEq<Plane> for Shape {
     fn eq(&self, other: &Plane) -> bool {
-        self.material().eq(other.material()) && self.transform().eq(other.transform())
+        self.material().eq(other.material()) && self.invtransform().eq(other.invtransform())
     }
 }
 
 pub fn plane() -> Plane {
     Plane {
         material: material(),
-        transform: identity_matrix(),
+        invtransform: identity_matrix(),
     }
 }
 
