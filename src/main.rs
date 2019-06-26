@@ -30,6 +30,7 @@ use camera::camera;
 use canvas::canvas;
 use cones::cone;
 use cylinders::cylinder;
+use groups::group;
 use lights::point_light;
 use patterns::checkers_pattern;
 use patterns::Pattern;
@@ -71,14 +72,18 @@ fn main() {
         cone.material.pattern = Some(Box::new(waffle));
         cone.material.shininess = 100.;
 
-        let mut cup = cylinder();
-        cup.maximum = 1.5;
-        cup.minimum = 0.;
-        cup.material.reflective = 0.5;
-        cup.material.transparency = 1.;
-        cup.material.refractive_index = 1.5;
-        cup.material.color = color(0.2, 0.2, 0.2);
-        cup.invtransform = translation(0.12, 0., -1.).inverse();
+        let mut icecream = group();
+        icecream.add_child(cone);
+        icecream.add_child(ice);
+
+        let mut cup_sides = cylinder();
+        cup_sides.maximum = 1.5;
+        cup_sides.minimum = 0.;
+        cup_sides.material.reflective = 0.5;
+        cup_sides.material.transparency = 1.;
+        cup_sides.material.refractive_index = 1.5;
+        cup_sides.material.color = color(0.2, 0.2, 0.2);
+        cup_sides.invtransform = translation(0.12, 0., -1.).inverse();
 
         let mut cup_bot = cylinder();
         cup_bot.maximum = 0.1;
@@ -90,14 +95,18 @@ fn main() {
         cup_bot.material.color = color(0.2, 0.2, 0.2);
         cup_bot.invtransform = translation(0.12, 0., -1.).inverse();
 
+        let mut cup = group();
+        cup.add_child(cup_sides);
+        cup.add_child(cup_bot);
+
+        let mut icecream_in_a_cup = group();
+        icecream_in_a_cup.add_child(icecream);
+        icecream_in_a_cup.add_child(cup);
+        icecream_in_a_cup.invtransform = translation(0., 0., 5.).inverse();
+
+
         let mut world = world();
-        world.objects = vec![
-            Rc::new(floor),
-            Rc::new(ice),
-            Rc::new(cone),
-            Rc::new(cup),
-            Rc::new(cup_bot),
-        ];
+        world.objects = vec![Rc::new(floor), Rc::new(icecream_in_a_cup)];
         world.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
 
         let mut camera = camera(width, height, PI / 3.);
@@ -105,7 +114,8 @@ fn main() {
             &point(0., 4., -10.),
             &point(0., 1., 0.),
             &vector(0., 1., 0.),
-        ).inverse();
+        )
+        .inverse();
 
         camera.render_async(world, pixel_sender);
     });
