@@ -32,10 +32,13 @@ use cones::cone;
 use cylinders::cylinder;
 use groups::group;
 use lights::point_light;
+use materials::material;
+use materials::Material;
 use patterns::checkers_pattern;
 use patterns::Pattern;
 use planes::plane;
 use spheres::sphere;
+use spheres::Sphere;
 use std::f64::consts::PI;
 use std::fs;
 use std::rc::Rc;
@@ -48,74 +51,60 @@ use world::world;
 use piston_window::*;
 use sdl2_window::Sdl2Window;
 
+fn glass() -> Material {
+    let mut glass = material();
+    glass.color = color(0., 0., 0.);
+    glass.transparency = 0.8;
+    glass.refractive_index = 1.5;
+    glass
+}
+
+fn marble(material: Material) -> Sphere {
+    let mut marble = sphere();
+    marble.material = material;
+    marble
+}
+
 fn main() {
     let (pixel_sender, pixel_reciever) = channel::<(usize, usize, Color)>();
-    let (width, height) = (300, 400);
+    let (width, height) = (1200, 600);
 
     thread::spawn(move || {
+        let mut waffle = checkers_pattern(color(1., 0.9, 0.1), color(0.9, 1.0, 0.1));
+        waffle.set_invtransform((scaling(0.03, 0.03, 0.02) * rotation_y(1.)).inverse());
+
         let mut floor = plane();
         floor.invtransform = scaling(10., 0.01, 10.).inverse();
         floor.material.reflective = 0.6;
-        floor.material.color = color(0.5, 0.5, 0.5);
+        floor.material.pattern = Some(Box::new(waffle));
 
-        let mut ice = sphere();
-        ice.invtransform = (translation(0., 2.1, -1.) * scaling(0.91, 0.91, 0.91)).inverse();
-
-        let mut waffle = checkers_pattern(color(1., 0.9, 0.1), color(0.8, 0.7, 0.1));
-        waffle.set_invtransform(scaling(0.03, 0.02, 0.01).inverse());
-
-        let mut cone = cone();
-        cone.maximum = 1.;
-        cone.minimum = 0.;
-        cone.closed = true;
-        cone.invtransform = (translation(0., 0., -1.) * scaling(1., 2., 1.)).inverse();
-        cone.material.pattern = Some(Box::new(waffle));
-        cone.material.shininess = 100.;
-
-        let mut icecream = group();
-        icecream.add_child(cone);
-        icecream.add_child(ice);
-
-        let mut cup_sides = cylinder();
-        cup_sides.maximum = 1.5;
-        cup_sides.minimum = 0.;
-        cup_sides.material.reflective = 0.5;
-        cup_sides.material.transparency = 1.;
-        cup_sides.material.refractive_index = 1.5;
-        cup_sides.material.color = color(0.2, 0.2, 0.2);
-        cup_sides.invtransform = translation(0.12, 0., -1.).inverse();
-
-        let mut cup_bot = cylinder();
-        cup_bot.maximum = 0.1;
-        cup_bot.minimum = 0.;
-        cup_bot.closed = true;
-        cup_bot.material.reflective = 0.5;
-        cup_bot.material.transparency = 1.;
-        cup_bot.material.refractive_index = 1.5;
-        cup_bot.material.color = color(0.2, 0.2, 0.2);
-        cup_bot.invtransform = translation(0.12, 0., -1.).inverse();
-
-        let mut cup = group();
-        cup.add_child(cup_sides);
-        cup.add_child(cup_bot);
-
-        let mut icecream_in_a_cup = group();
-        icecream_in_a_cup.add_child(icecream);
-        icecream_in_a_cup.add_child(cup);
-        icecream_in_a_cup.invtransform = translation(0., 0., 5.).inverse();
-
+        let grid = (0..16)
+            .map(|i| {
+                (0..16)
+                    .map(|j| {
+                        let mut shape = marble(glass());
+                        shape.invtransform = (translation((i - 12) as f64, 0.3, (j - 12) as f64)
+                            * scaling(0.3, 0.3, 0.3))
+                        .inverse();
+                        shape
+                    })
+                    .fold(group(), |mut cell, shape| {
+                        cell.add_child(shape);
+                        cell
+                    })
+            })
+            .fold(group(), |mut grid, cell| {
+                grid.add_child(cell);
+                grid
+            });
 
         let mut world = world();
-        world.objects = vec![Rc::new(floor), Rc::new(icecream_in_a_cup)];
+        world.objects = vec![Rc::new(floor), Rc::new(grid)];
         world.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
 
         let mut camera = camera(width, height, PI / 3.);
-        camera.invtransform = view_transform(
-            &point(0., 4., -10.),
-            &point(0., 1., 0.),
-            &vector(0., 1., 0.),
-        )
-        .inverse();
+        camera.invtransform =
+            view_transform(&point(0., 1., -1.), &point(0., 1., 0.), &vector(0., 1., 0.)).inverse();
 
         camera.render_async(world, pixel_sender);
     });
