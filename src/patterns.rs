@@ -11,7 +11,7 @@ pub trait Pattern {
 
     fn at(&self, point: &Tuple) -> Color;
     fn at_shape(&self, shape: Rc<Shape>, world_point: &Tuple) -> Color {
-        let shape_point = shape.invtransform() * world_point;
+        let shape_point = shape.world_to_object(world_point);
         let pattern_point = self.invtransform() * &shape_point;
         self.at(&pattern_point)
     }

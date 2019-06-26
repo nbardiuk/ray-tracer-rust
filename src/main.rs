@@ -3,6 +3,7 @@ mod canvas;
 mod cones;
 mod cubes;
 mod cylinders;
+mod groups;
 mod intersections;
 mod lights;
 mod materials;
@@ -48,7 +49,7 @@ use sdl2_window::Sdl2Window;
 
 fn main() {
     let (pixel_sender, pixel_reciever) = channel::<(usize, usize, Color)>();
-    let (width, height) = (600, 400);
+    let (width, height) = (300, 400);
 
     thread::spawn(move || {
         let mut floor = plane();

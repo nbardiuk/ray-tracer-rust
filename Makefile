@@ -10,7 +10,7 @@ test:
 
 .PHONY: tdd
 tdd:
-	cargo watch -x test
+	cargo watch -x 'test -q'
 
 .PHONY: clean
 clean:
