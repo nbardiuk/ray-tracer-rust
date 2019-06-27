@@ -17,6 +17,7 @@ mod spheres;
 mod transformations;
 mod tuples;
 mod world;
+mod bounds;
 
 extern crate piston_window;
 extern crate rand;
@@ -28,8 +29,6 @@ extern crate hamcrest2;
 
 use camera::camera;
 use canvas::canvas;
-use cones::cone;
-use cylinders::cylinder;
 use groups::group;
 use lights::point_light;
 use materials::material;
