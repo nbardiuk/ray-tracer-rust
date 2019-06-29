@@ -1,3 +1,4 @@
+mod bounds;
 mod camera;
 mod canvas;
 mod cones;
@@ -17,7 +18,6 @@ mod spheres;
 mod transformations;
 mod tuples;
 mod world;
-mod bounds;
 
 extern crate piston_window;
 extern crate rand;
@@ -29,7 +29,10 @@ extern crate hamcrest2;
 
 use camera::camera;
 use canvas::canvas;
+use cylinders::cylinder;
+use cylinders::Cylinder;
 use groups::group;
+use groups::Group;
 use lights::point_light;
 use materials::material;
 use materials::Material;
@@ -50,23 +53,50 @@ use world::world;
 use piston_window::*;
 use sdl2_window::Sdl2Window;
 
-fn glass() -> Material {
-    let mut glass = material();
-    glass.color = color(0., 0., 0.);
-    glass.transparency = 0.8;
-    glass.refractive_index = 1.5;
-    glass
+fn hexagon_corner() -> Sphere {
+    let mut corner = sphere();
+    corner.invtransform = (translation(0., 0., -1.) * scaling(0.25, 0.25, 0.25)).inverse();
+    corner
 }
 
-fn marble(material: Material) -> Sphere {
-    let mut marble = sphere();
-    marble.material = material;
-    marble
+fn hexagon_edge() -> Cylinder {
+    let mut edge = cylinder();
+    edge.minimum = 0.;
+    edge.maximum = 1.;
+    edge.invtransform = (translation(0., 0., -1.)
+        * rotation_y(-PI / 6.)
+        * rotation_z(-PI / 2.)
+        * scaling(0.25, 1., 0.25))
+    .inverse();
+    edge
+}
+
+fn hexagon_side() -> Group {
+    let mut side = group();
+    side.add_child(hexagon_corner());
+    side.add_child(hexagon_edge());
+    side
+}
+
+fn hexagon() -> Group {
+    let mut hex = group();
+
+    (0..6)
+        .map(|n| {
+            let mut side = hexagon_side();
+            side.invtransform = (rotation_y((n as f64) * PI / 3.)).inverse();
+            side
+        })
+        .for_each(|side| {
+            hex.add_child(side);
+        });
+
+    hex
 }
 
 fn main() {
     let (pixel_sender, pixel_reciever) = channel::<(usize, usize, Color)>();
-    let (width, height) = (1200, 600);
+    let (width, height) = (500, 500);
 
     thread::spawn(move || {
         let mut waffle = checkers_pattern(color(1., 0.9, 0.1), color(0.9, 1.0, 0.1));
@@ -77,33 +107,17 @@ fn main() {
         floor.material.reflective = 0.6;
         floor.material.pattern = Some(Box::new(waffle));
 
-        let grid = (0..16)
-            .map(|i| {
-                (0..16)
-                    .map(|j| {
-                        let mut shape = marble(glass());
-                        shape.invtransform = (translation((i - 12) as f64, 0.3, (j - 12) as f64)
-                            * scaling(0.3, 0.3, 0.3))
-                        .inverse();
-                        shape
-                    })
-                    .fold(group(), |mut cell, shape| {
-                        cell.add_child(shape);
-                        cell
-                    })
-            })
-            .fold(group(), |mut grid, cell| {
-                grid.add_child(cell);
-                grid
-            });
+        let mut hex = hexagon();
+        hex.invtransform =
+            (translation(0., 1., 0.) * rotation_x(-PI / 8.) * rotation_z(PI / 10.)).inverse();
 
         let mut world = world();
-        world.objects = vec![Rc::new(floor), Rc::new(grid)];
+        world.objects = vec![Rc::new(floor), Rc::new(hex)];
         world.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
 
         let mut camera = camera(width, height, PI / 3.);
         camera.invtransform =
-            view_transform(&point(0., 1., -1.), &point(0., 1., 0.), &vector(0., 1., 0.)).inverse();
+            view_transform(&point(0., 3., -5.), &point(0., 1., 0.), &vector(0., 1., 0.)).inverse();
 
         camera.render_async(world, pixel_sender);
     });
