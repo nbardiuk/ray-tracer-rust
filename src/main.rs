@@ -16,6 +16,7 @@ mod rays;
 mod shapes;
 mod spheres;
 mod transformations;
+mod triangles;
 mod tuples;
 mod world;
 

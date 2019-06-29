@@ -16,6 +16,14 @@ pub fn bound(min: Tuple, max: Tuple) -> Bounds {
 pub fn bound_single(p: Tuple) -> Bounds {
     bound(p.clone(), p.clone())
 }
+pub fn bound_vector(points: Vec<Tuple>) -> Bounds {
+    let bounds: Vec<Bounds> = points.into_iter().map(|p| bound_single(p)).collect();
+
+    //unsafe sum
+    let mut i = bounds.into_iter();
+    let first = i.next().unwrap();
+    i.fold(first, |acc, b| acc + b)
+}
 
 fn check_axis(origin: f64, direction: f64, minimum: f64, maximum: f64) -> (f64, f64) {
     let tmin_numerator = minimum - origin;
@@ -44,7 +52,7 @@ impl Bounds {
         tmin <= tmax && (tmin >= 0. || tmax >= 0.)
     }
     pub fn transform(&self, transform: &Matrix) -> Bounds {
-        let bounds: Vec<Bounds> = vec![
+        let points: Vec<Tuple> = vec![
             point(self.min.x, self.min.y, self.min.z),
             point(self.min.x, self.max.y, self.min.z),
             point(self.min.x, self.min.y, self.max.z),
@@ -55,13 +63,9 @@ impl Bounds {
             point(self.max.x, self.max.y, self.max.z),
         ]
         .into_iter()
-        .map(|p| bound_single(transform * &p))
+        .map(|p| transform * &p)
         .collect();
-
-        //unsafe sum
-        let mut i = bounds.into_iter();
-        let first = i.next().unwrap();
-        i.fold(first, |acc, b| acc + b)
+        bound_vector(points)
     }
 }
 
