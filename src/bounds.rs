@@ -4,20 +4,20 @@ use tuples::point;
 use tuples::Tuple;
 
 #[derive(Clone, Debug, PartialEq)]
-struct Bounds {
+pub struct Bounds {
     min: Tuple,
     max: Tuple,
 }
 
-fn bound(min: Tuple, max: Tuple) -> Bounds {
+pub fn bound(min: Tuple, max: Tuple) -> Bounds {
     Bounds { min, max }
 }
-fn bound_single(p: Tuple) -> Bounds {
+pub fn bound_single(p: Tuple) -> Bounds {
     bound(p.clone(), p.clone())
 }
 
 impl Bounds {
-    fn transform(&self, invtransform: Matrix) -> Bounds {
+    pub fn transform(&self, transform: &Matrix) -> Bounds {
         let bounds: Vec<Bounds> = vec![
             point(self.min.x, self.min.y, self.min.z),
             point(self.min.x, self.max.y, self.min.z),
@@ -29,13 +29,13 @@ impl Bounds {
             point(self.max.x, self.max.y, self.max.z),
         ]
         .into_iter()
-        .map(|p| bound_single(&invtransform * &p))
+        .map(|p| bound_single(transform * &p))
         .collect();
 
         //unsafe sum
         let mut i = bounds.into_iter();
         let first = i.next().unwrap();
-        i.skip(1).fold(first, |acc, b| acc + b)
+        i.fold(first, |acc, b| acc + b)
     }
 }
 
@@ -91,15 +91,15 @@ mod spec {
         let sq2 = 2.0_f64.sqrt();
         let on_edge = PI / 4.;
         assert_eq!(
-            square.transform(rotation_x(on_edge).inverse()),
+            square.transform(&rotation_x(on_edge)),
             bound(point(-1., -sq2, -sq2), point(1., sq2, sq2))
         );
         assert_eq!(
-            square.transform(rotation_y(on_edge).inverse()),
+            square.transform(&rotation_y(on_edge)),
             bound(point(-sq2, -1., -sq2), point(sq2, 1., sq2))
         );
         assert_eq!(
-            square.transform(rotation_z(on_edge).inverse()),
+            square.transform(&rotation_z(on_edge)),
             bound(point(-sq2, -sq2, -1.), point(sq2, sq2, 1.))
         );
     }

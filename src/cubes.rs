@@ -1,3 +1,5 @@
+use bounds::bound;
+use bounds::Bounds;
 use intersections::intersection;
 use intersections::Intersection;
 use intersections::EPSILON;
@@ -8,6 +10,7 @@ use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
 use std::rc::Rc;
+use tuples::point;
 use tuples::vector;
 use tuples::Tuple;
 
@@ -36,6 +39,9 @@ fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
 }
 
 impl Shape for Cube {
+    fn local_bounds(&self) -> Bounds {
+        bound(point(-1., -1., -1.), point(1., 1., 1.))
+    }
     fn material(&self) -> &Material {
         &self.material
     }
@@ -154,5 +160,14 @@ mod spec {
         ] {
             assert_eq!(c.local_normal_at(point), normal);
         }
+    }
+    #[test]
+    fn a_bounds_of_a_cube() {
+        let c = cube();
+
+        assert_eq!(
+            c.local_bounds(),
+            bound(point(-1., -1., -1.), point(1., 1., 1.))
+        );
     }
 }

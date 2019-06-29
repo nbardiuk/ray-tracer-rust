@@ -1,3 +1,5 @@
+use bounds::bound;
+use bounds::Bounds;
 use intersections::Intersection;
 use materials::Material;
 use matrices::identity_matrix;
@@ -30,6 +32,17 @@ impl Group {
     }
 }
 impl Shape for Group {
+    fn local_bounds(&self) -> Bounds {
+        let bounds: Vec<Bounds> = self
+            .children
+            .iter()
+            .map(|c| c.local_bounds().transform(&c.invtransform().inverse()))
+            .collect();
+        //unsafe sum
+        let mut i = bounds.into_iter();
+        let first = i.next().unwrap();
+        i.fold(first, |acc, b| acc + b)
+    }
     fn material(&self) -> &Material {
         self.children[0].material()
     }
@@ -155,5 +168,20 @@ mod spec {
         let xs = g.intersects(g.clone(), &r);
 
         assert_eq!(xs.len(), 2);
+    }
+    #[test]
+    fn a_bounds_of_a_group() {
+        let mut s1 = sphere();
+        s1.invtransform = translation(1., 1., 1.).inverse();
+        let mut s2 = sphere();
+        s2.invtransform = translation(-1., -2., -3.).inverse();
+        let mut g = group();
+        g.add_child(s1);
+        g.add_child(s2);
+
+        assert_eq!(
+            g.local_bounds(),
+            bound(point(-2., -3., -4.), point(2., 2., 2.))
+        );
     }
 }

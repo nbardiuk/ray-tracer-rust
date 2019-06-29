@@ -1,3 +1,5 @@
+use bounds::bound;
+use bounds::Bounds;
 use intersections::intersection;
 use intersections::Intersection;
 use intersections::EPSILON;
@@ -7,7 +9,10 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
+use std::f64::INFINITY;
+use std::f64::NEG_INFINITY;
 use std::rc::Rc;
+use tuples::point;
 use tuples::vector;
 use tuples::Tuple;
 
@@ -20,6 +25,12 @@ pub struct Plane {
 }
 
 impl Shape for Plane {
+    fn local_bounds(&self) -> Bounds {
+        bound(
+            point(NEG_INFINITY, NEG_INFINITY, 0.),
+            point(INFINITY, INFINITY, 0.),
+        )
+    }
     fn material(&self) -> &Material {
         &self.material
     }
@@ -118,5 +129,18 @@ mod spec {
 
         assert_eq!(xs.len(), 1);
         assert_eq!(*xs[0].object, *p);
+    }
+
+    #[test]
+    fn a_bounds_of_a_plane() {
+        let p = plane();
+
+        assert_eq!(
+            p.local_bounds(),
+            bound(
+                point(NEG_INFINITY, NEG_INFINITY, 0.),
+                point(INFINITY, INFINITY, 0.)
+            )
+        );
     }
 }

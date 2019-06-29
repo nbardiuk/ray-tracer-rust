@@ -1,3 +1,5 @@
+use bounds::bound;
+use bounds::Bounds;
 use intersections::intersection;
 use intersections::intersections;
 use intersections::Intersection;
@@ -30,6 +32,10 @@ pub fn glass_sphere() -> Sphere {
 }
 
 impl Shape for Sphere {
+    fn local_bounds(&self) -> Bounds {
+        bound(point(-1., -1., -1.), point(1., 1., 1.))
+    }
+
     fn material(&self) -> &Material {
         &self.material
     }
@@ -217,5 +223,12 @@ mod spec {
         assert_eq!(s.invtransform, identity_matrix());
         assert_eq!(s.material.transparency, 1.0);
         assert_eq!(s.material.refractive_index, 1.5);
+    }
+
+    #[test]
+    fn bounds_of_a_sphere() {
+        let s = sphere();
+
+        assert_eq!(s.local_bounds(), bound(point(-1., -1., -1.), point(1., 1., 1.)));
     }
 }

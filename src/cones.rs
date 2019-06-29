@@ -1,3 +1,5 @@
+use bounds::bound;
+use bounds::Bounds;
 use intersections::intersection;
 use intersections::Intersection;
 use intersections::EPSILON;
@@ -10,6 +12,7 @@ use shapes::Shape;
 use std::f64::INFINITY;
 use std::f64::NEG_INFINITY;
 use std::rc::Rc;
+use tuples::point;
 use tuples::vector;
 use tuples::Tuple;
 
@@ -80,6 +83,12 @@ impl Cone {
 }
 
 impl Shape for Cone {
+    fn local_bounds(&self) -> Bounds {
+        bound(
+            point(self.minimum, self.minimum, self.minimum),
+            point(self.maximum, self.maximum, self.maximum),
+        )
+    }
     fn material(&self) -> &Material {
         &self.material
     }
@@ -183,5 +192,28 @@ mod spec {
         ] {
             assert_eq!(c.local_normal_at(point), normal);
         }
+    }
+    #[test]
+    fn a_bounds_of_a_cone() {
+        let c = cone();
+
+        assert_eq!(
+            c.local_bounds(),
+            bound(
+                point(NEG_INFINITY, NEG_INFINITY, NEG_INFINITY),
+                point(INFINITY, INFINITY, INFINITY)
+            )
+        );
+    }
+    #[test]
+    fn a_bounds_of_a_bounded_cone() {
+        let mut c = cone();
+        c.minimum = -2.;
+        c.maximum = 4.;
+
+        assert_eq!(
+            c.local_bounds(),
+            bound(point(-2., -2., -2.), point(4., 4., 4.))
+        );
     }
 }

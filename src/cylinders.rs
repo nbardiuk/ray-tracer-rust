@@ -1,3 +1,5 @@
+use bounds::bound;
+use bounds::Bounds;
 use intersections::intersection;
 use intersections::Intersection;
 use intersections::EPSILON;
@@ -10,6 +12,7 @@ use shapes::Shape;
 use std::f64::INFINITY;
 use std::f64::NEG_INFINITY;
 use std::rc::Rc;
+use tuples::point;
 use tuples::vector;
 use tuples::Tuple;
 
@@ -27,6 +30,7 @@ fn check_cap(ray: &Ray, t: f64) -> bool {
     let z = ray.origin.z + t * ray.direction.z;
     x.powi(2) + z.powi(2) <= 1.
 }
+
 impl Cylinder {
     fn intersect_caps(&self, rc: Rc<Shape>, ray: &Ray) -> Vec<Intersection> {
         if !self.closed || ray.direction.y.abs() < EPSILON {
@@ -72,6 +76,9 @@ impl Cylinder {
 }
 
 impl Shape for Cylinder {
+    fn local_bounds(&self) -> Bounds {
+        bound(point(-1., self.minimum, -1.), point(1., self.maximum, 1.))
+    }
     fn material(&self) -> &Material {
         &self.material
     }
@@ -213,5 +220,27 @@ mod spec {
         ] {
             assert_eq!(cyl.local_normal_at(point), normal);
         }
+    }
+
+    #[test]
+    fn a_bounds_of_a_cylinder() {
+        let c = cylinder();
+
+        assert_eq!(
+            c.local_bounds(),
+            bound(point(-1., NEG_INFINITY, -1.), point(1., INFINITY, 1.))
+        );
+    }
+
+    #[test]
+    fn a_bounds_of_a_bounded_cylinder() {
+        let mut c = cylinder();
+        c.minimum = -2.;
+        c.maximum = 4.;
+
+        assert_eq!(
+            c.local_bounds(),
+            bound(point(-1., -2., -1.), point(1., 4., 1.))
+        );
     }
 }

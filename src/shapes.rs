@@ -1,3 +1,5 @@
+use bounds::bound_single;
+use bounds::Bounds;
 use intersections::Intersection;
 use materials::Material;
 use matrices::Matrix;
@@ -32,6 +34,8 @@ pub trait Shape {
         let local_ray = inray.transform(self.invtransform());
         self.local_intersects(rc, local_ray)
     }
+
+    fn local_bounds(&self) -> Bounds;
 }
 
 impl std::fmt::Debug for Shape {
@@ -75,6 +79,9 @@ pub mod spec {
         material: Material,
     }
     impl Shape for TestShape {
+        fn local_bounds(&self) -> Bounds {
+            bound_single(point(0., 0., 0.))
+        }
         fn material(&self) -> &Material {
             &self.material
         }
