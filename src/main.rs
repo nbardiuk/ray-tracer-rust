@@ -34,8 +34,6 @@ use cylinders::Cylinder;
 use groups::group;
 use groups::Group;
 use lights::point_light;
-use materials::material;
-use materials::Material;
 use patterns::checkers_pattern;
 use patterns::Pattern;
 use planes::plane;

@@ -1,8 +1,5 @@
-use intersections::EPSILON;
 use matrices::Matrix;
 use rays::Ray;
-use std::f64::INFINITY;
-use std::f64::NEG_INFINITY;
 use std::ops::Add;
 use tuples::point;
 use tuples::Tuple;
