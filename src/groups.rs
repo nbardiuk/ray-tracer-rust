@@ -1,4 +1,3 @@
-use bounds::bound;
 use bounds::bound_single;
 use bounds::Bounds;
 use intersections::Intersection;
@@ -42,7 +41,7 @@ impl Group {
         Rc::new(Group {
             invtransform: self.invtransform.clone(),
             children: vec![child.clone()],
-            bounds: child.local_bounds().clone(),
+            bounds: child.local_bounds(),
         })
     }
 }
@@ -59,10 +58,6 @@ impl Shape for Group {
     }
     fn set_invtransform(&mut self, invtransform: Matrix) {
         self.invtransform = invtransform;
-    }
-    fn intersects(&self, rc: Rc<Shape>, inray: &Ray) -> Vec<Intersection> {
-        let local_ray = inray.transform(&self.invtransform);
-        self.local_intersects(rc, local_ray)
     }
     fn world_to_object(&self, world_point: &Tuple) -> Tuple {
         self.children[0].world_to_object(&(self.invtransform() * world_point))
@@ -104,6 +99,7 @@ pub fn group() -> Group {
 #[cfg(test)]
 mod spec {
     use super::*;
+    use bounds::bound;
     use hamcrest2::prelude::*;
     use matrices::identity_matrix;
     use rays::ray;
