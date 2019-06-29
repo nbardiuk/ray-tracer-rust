@@ -22,14 +22,12 @@ use tuples::Tuple;
 pub struct Plane {
     pub invtransform: Matrix,
     pub material: Material,
+    bounds: Bounds,
 }
 
 impl Shape for Plane {
     fn local_bounds(&self) -> Bounds {
-        bound(
-            point(NEG_INFINITY, NEG_INFINITY, 0.),
-            point(INFINITY, INFINITY, 0.),
-        )
+        self.bounds.clone()
     }
     fn material(&self) -> &Material {
         &self.material
@@ -66,6 +64,10 @@ pub fn plane() -> Plane {
     Plane {
         material: material(),
         invtransform: identity_matrix(),
+        bounds: bound(
+            point(NEG_INFINITY, NEG_INFINITY, 0.),
+            point(INFINITY, INFINITY, 0.),
+        ),
     }
 }
 

@@ -15,12 +15,14 @@ use tuples::Tuple;
 pub struct Sphere {
     pub invtransform: Matrix,
     pub material: Material,
+    bounds: Bounds,
 }
 
 pub fn sphere() -> Sphere {
     Sphere {
         invtransform: identity_matrix(),
         material: material(),
+        bounds: bound(point(-1., -1., -1.), point(1., 1., 1.)),
     }
 }
 
@@ -33,7 +35,7 @@ pub fn glass_sphere() -> Sphere {
 
 impl Shape for Sphere {
     fn local_bounds(&self) -> Bounds {
-        bound(point(-1., -1., -1.), point(1., 1., 1.))
+        self.bounds.clone()
     }
 
     fn material(&self) -> &Material {
@@ -229,6 +231,9 @@ mod spec {
     fn bounds_of_a_sphere() {
         let s = sphere();
 
-        assert_eq!(s.local_bounds(), bound(point(-1., -1., -1.), point(1., 1., 1.)));
+        assert_eq!(
+            s.local_bounds(),
+            bound(point(-1., -1., -1.), point(1., 1., 1.))
+        );
     }
 }

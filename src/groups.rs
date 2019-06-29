@@ -1,4 +1,5 @@
 use bounds::bound;
+use bounds::bound_single;
 use bounds::Bounds;
 use intersections::Intersection;
 use materials::Material;
@@ -7,12 +8,14 @@ use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
 use std::rc::Rc;
+use tuples::point;
 use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Group {
     pub invtransform: Matrix,
     pub children: Vec<Rc<Shape>>,
+    bounds: Bounds,
 }
 
 impl Group {
@@ -22,17 +25,7 @@ impl Group {
     {
         let c = Rc::new(child);
         self.children.push(c.clone());
-        c
-    }
-    fn wrap(&self, child: Rc<Shape>) -> Rc<Shape> {
-        Rc::new(Group {
-            invtransform: self.invtransform.clone(),
-            children: vec![child.clone()],
-        })
-    }
-}
-impl Shape for Group {
-    fn local_bounds(&self) -> Bounds {
+
         let bounds: Vec<Bounds> = self
             .children
             .iter()
@@ -41,7 +34,21 @@ impl Shape for Group {
         //unsafe sum
         let mut i = bounds.into_iter();
         let first = i.next().unwrap();
-        i.fold(first, |acc, b| acc + b)
+        self.bounds = i.fold(first, |acc, b| acc + b);
+
+        c
+    }
+    fn wrap(&self, child: Rc<Shape>) -> Rc<Shape> {
+        Rc::new(Group {
+            invtransform: self.invtransform.clone(),
+            children: vec![child.clone()],
+            bounds: child.local_bounds().clone(),
+        })
+    }
+}
+impl Shape for Group {
+    fn local_bounds(&self) -> Bounds {
+        self.bounds.clone()
     }
     fn material(&self) -> &Material {
         self.children[0].material()
@@ -61,17 +68,21 @@ impl Shape for Group {
         self.children[0].world_to_object(&(self.invtransform() * world_point))
     }
     fn local_intersects(&self, _rc: Rc<Shape>, ray: Ray) -> Vec<Intersection> {
-        let mut xs: Vec<Intersection> = self
-            .children
-            .iter()
-            .flat_map(|object| object.intersects(object.clone(), &ray))
-            .map(|mut i| {
-                i.object = self.wrap(i.object);
-                i
-            })
-            .collect();
-        xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
-        xs
+        if self.children.len() > 0 && self.local_bounds().intersects(&ray) {
+            let mut xs: Vec<Intersection> = self
+                .children
+                .iter()
+                .flat_map(|object| object.intersects(object.clone(), &ray))
+                .map(|mut i| {
+                    i.object = self.wrap(i.object);
+                    i
+                })
+                .collect();
+            xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
+            xs
+        } else {
+            vec![]
+        }
     }
     fn local_normal_at(&self, local_point: Tuple) -> Tuple {
         self.children[0].local_normal_at(local_point)
@@ -87,6 +98,7 @@ pub fn group() -> Group {
     Group {
         invtransform: identity_matrix(),
         children: vec![],
+        bounds: bound_single(point(0., 0., 0.)),
     }
 }
 #[cfg(test)]

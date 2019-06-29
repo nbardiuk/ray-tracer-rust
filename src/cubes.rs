@@ -18,6 +18,7 @@ use tuples::Tuple;
 pub struct Cube {
     pub invtransform: Matrix,
     pub material: Material,
+    bounds: Bounds,
 }
 
 fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
@@ -40,7 +41,7 @@ fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
 
 impl Shape for Cube {
     fn local_bounds(&self) -> Bounds {
-        bound(point(-1., -1., -1.), point(1., 1., 1.))
+        self.bounds.clone()
     }
     fn material(&self) -> &Material {
         &self.material
@@ -101,6 +102,7 @@ pub fn cube() -> Cube {
     Cube {
         material,
         invtransform,
+        bounds: bound(point(-1., -1., -1.), point(1., 1., 1.)),
     }
 }
 
