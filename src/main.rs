@@ -31,18 +31,15 @@ extern crate hamcrest2;
 
 use camera::camera;
 use canvas::canvas;
-use cylinders::cylinder;
-use cylinders::Cylinder;
-use groups::group;
 use groups::Group;
 use lights::point_light;
+use obj_file::parse_obj;
 use patterns::checkers_pattern;
-use patterns::Pattern;
 use planes::plane;
-use spheres::sphere;
-use spheres::Sphere;
 use std::f64::consts::PI;
 use std::fs;
+use std::fs::File;
+use std::io::prelude::*;
 use std::rc::Rc;
 use std::sync::mpsc::channel;
 use std::thread;
@@ -53,71 +50,38 @@ use world::world;
 use piston_window::*;
 use sdl2_window::Sdl2Window;
 
-fn hexagon_corner() -> Sphere {
-    let mut corner = sphere();
-    corner.invtransform = (translation(0., 0., -1.) * scaling(0.25, 0.25, 0.25)).inverse();
-    corner
-}
-
-fn hexagon_edge() -> Cylinder {
-    let mut edge = cylinder();
-    edge.minimum = 0.;
-    edge.maximum = 1.;
-    edge.invtransform = (translation(0., 0., -1.)
-        * rotation_y(-PI / 6.)
-        * rotation_z(-PI / 2.)
-        * scaling(0.25, 1., 0.25))
-    .inverse();
-    edge
-}
-
-fn hexagon_side() -> Group {
-    let mut side = group();
-    side.add_child(hexagon_corner());
-    side.add_child(hexagon_edge());
-    side
-}
-
-fn hexagon() -> Group {
-    let mut hex = group();
-
-    (0..6)
-        .map(|n| {
-            let mut side = hexagon_side();
-            side.invtransform = (rotation_y((n as f64) * PI / 3.)).inverse();
-            side
-        })
-        .for_each(|side| {
-            hex.add_child(side);
-        });
-
-    hex
+fn read_teapot() -> std::io::Result<Group> {
+    let mut file = File::open("objs/teapot-low.obj")?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+    Ok(parse_obj(&contents).to_group())
 }
 
 fn main() {
     let (pixel_sender, pixel_reciever) = channel::<(usize, usize, Color)>();
-    let (width, height) = (500, 500);
+    let (width, height) = (500, 300);
 
     thread::spawn(move || {
-        let mut waffle = checkers_pattern(color(1., 0.9, 0.1), color(0.9, 1.0, 0.1));
-        waffle.set_invtransform((scaling(0.03, 0.03, 0.02) * rotation_y(1.)).inverse());
+        let waffle = checkers_pattern(color(1., 0.9, 0.1), color(0.9, 1.0, 0.1));
 
         let mut floor = plane();
-        floor.invtransform = scaling(10., 0.01, 10.).inverse();
+        floor.invtransform = rotation_x(PI / 2.).inverse();
         floor.material.reflective = 0.6;
         floor.material.pattern = Some(Box::new(waffle));
 
-        let mut hex = hexagon();
-        hex.invtransform =
-            (translation(0., 1., 0.) * rotation_x(-PI / 8.) * rotation_z(PI / 10.)).inverse();
+        let teapod = read_teapot().unwrap();
 
         let mut world = world();
-        world.objects = vec![Rc::new(floor), Rc::new(hex)];
-        world.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
+        world.objects = vec![Rc::new(floor), Rc::new(teapod)];
+        world.light_sources = vec![point_light(point(30., -30., 30.), color(1., 1., 1.))];
 
         let mut camera = camera(width, height, PI / 3.);
-        camera.invtransform =
-            view_transform(&point(0., 3., -5.), &point(0., 1., 0.), &vector(0., 1., 0.)).inverse();
+        camera.invtransform = view_transform(
+            &point(0., -30., 30.),
+            &point(0., 1., 0.),
+            &vector(0., 1., 0.),
+        )
+        .inverse();
 
         camera.render_async(world, pixel_sender);
     });

@@ -8,14 +8,14 @@ use triangles::Triangle;
 use tuples::point;
 use tuples::Tuple;
 
-struct Parsed {
+pub struct Parsed {
     vertices: Vec<Tuple>,
     default_group: Rc<Group>,
     groups: HashMap<String, Rc<Group>>,
 }
 
 impl Parsed {
-    fn to_group(&self) -> Group {
+    pub fn to_group(&self) -> Group {
         let mut g = group();
         g.add_child_rc(self.default_group.clone());
         self.groups.iter().for_each(|(_k, v)| {
@@ -33,7 +33,7 @@ impl Parsed {
     }
 }
 
-fn parse_obj(text: &str) -> Parsed {
+pub fn parse_obj(text: &str) -> Parsed {
     let empty_result = Parsed {
         vertices: vec![],
         default_group: Rc::new(group()),
@@ -61,7 +61,7 @@ fn parse_obj(text: &str) -> Parsed {
 }
 
 fn parse_vertex(line: &str) -> Result<Tuple, ParseFloatError> {
-    let nums: Vec<&str> = line.trim_start_matches("v ").split(' ').collect();
+    let nums: Vec<&str> = line.trim_start_matches("v ").trim().split(' ').collect();
     let x = nums[0].parse::<f64>()?;
     let y = nums[1].parse::<f64>()?;
     let z = nums[2].parse::<f64>()?;
@@ -83,7 +83,11 @@ fn parse_polygon(line: &str) -> Option<Vec<usize>> {
         Some(
             line.trim_start_matches("f ")
                 .split(' ')
-                .filter_map(|n| n.parse::<usize>().ok())
+                .filter_map(|n| {
+                    n.split('/').take(1).collect::<Vec<&str>>()[0].parse::<usize>().ok()
+                    // n.parse::<usize>().ok()
+                }
+                )
                 .collect(),
         )
     }
@@ -154,6 +158,37 @@ v 1 1 0
 
 f 1 2 3
 f 1 3 4
+        "#;
+
+        let parsed = parse_obj(file);
+        let g = parsed.default_group;
+        let t1 = g.children[0].clone();
+        let t2 = g.children[1].clone();
+
+        let ex1: Rc<Shape> = Rc::new(triangle(
+            parsed.vertices[0].clone(),
+            parsed.vertices[1].clone(),
+            parsed.vertices[2].clone(),
+        ));
+        let ex2: Rc<Shape> = Rc::new(triangle(
+            parsed.vertices[0].clone(),
+            parsed.vertices[2].clone(),
+            parsed.vertices[3].clone(),
+        ));
+
+        assert_that!(t1, eq(ex1));
+        assert_that!(t2, eq(ex2));
+    }
+    #[test]
+    fn parsing_triangle_faces_with_normals_textures() {
+        let file = r#"
+v -1 1 0
+v -1 0 0
+v 1 0 0
+v 1 1 0
+
+f 1/1/1 2//2 3/3/3
+f 1/2/3 3/2/1 4/2/1
         "#;
 
         let parsed = parse_obj(file);
