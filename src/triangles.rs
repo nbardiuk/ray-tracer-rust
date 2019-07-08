@@ -12,6 +12,7 @@ use shapes::Shape;
 use std::rc::Rc;
 use tuples::Tuple;
 
+#[derive(Debug, PartialEq)]
 pub struct Triangle {
     p1: Tuple,
     p2: Tuple,

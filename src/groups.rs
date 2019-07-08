@@ -23,7 +23,11 @@ impl Group {
         T: Shape,
     {
         let c = Rc::new(child);
-        self.children.push(c.clone());
+        self.add_child_rc(c.clone());
+        c
+    }
+    pub fn add_child_rc(&mut self, c: Rc<Shape>) {
+        self.children.push(c);
 
         let bounds: Vec<Bounds> = self
             .children
@@ -34,8 +38,6 @@ impl Group {
         let mut i = bounds.into_iter();
         let first = i.next().unwrap();
         self.bounds = i.fold(first, |acc, b| acc + b);
-
-        c
     }
     fn wrap(&self, child: Rc<Shape>) -> Rc<Shape> {
         Rc::new(Group {

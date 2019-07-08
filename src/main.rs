@@ -9,6 +9,7 @@ mod intersections;
 mod lights;
 mod materials;
 mod matrices;
+mod obj_file;
 mod patterns;
 mod planes;
 mod ppm;
