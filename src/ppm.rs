@@ -1,4 +1,5 @@
 use canvas::Canvas;
+use tuples::f_u8;
 use tuples::Color;
 
 impl Canvas {
@@ -40,19 +41,9 @@ fn wrap(words: impl Iterator<Item = String>, max_len: usize) -> Vec<String> {
 
 fn colors(c: &Color) -> Vec<String> {
     vec![c.red, c.green, c.blue]
-        .iter()
-        .map(|f| clip_range(*f, 0.0, 255.0).to_string())
+        .into_iter()
+        .map(|f| f_u8(f).to_string())
         .collect()
-}
-
-fn clip_range(f: f64, low: f64, up: f64) -> f64 {
-    if f > 1.0 {
-        up
-    } else if f < 0.0 {
-        low
-    } else {
-        (f * up).ceil()
-    }
 }
 
 #[cfg(test)]

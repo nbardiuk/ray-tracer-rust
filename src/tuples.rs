@@ -266,6 +266,20 @@ fn close(a: f64, b: f64) -> bool {
     a == b || (a - b).abs() <= 1e-5
 }
 
+pub fn f_u8(f: f64) -> u8 {
+    clip_range(f, 0.0, 255.0) as u8
+}
+
+fn clip_range(f: f64, low: f64, up: f64) -> f64 {
+    if f > 1.0 {
+        up
+    } else if f < 0.0 {
+        low
+    } else {
+        (f * up).ceil()
+    }
+}
+
 #[cfg(test)]
 mod spec {
     use super::*;

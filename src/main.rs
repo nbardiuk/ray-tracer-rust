@@ -21,9 +21,7 @@ mod triangles;
 mod tuples;
 mod world;
 
-extern crate piston_window;
-extern crate rand;
-extern crate sdl2_window;
+extern crate sdl2;
 
 #[cfg(test)]
 #[macro_use]
@@ -36,6 +34,10 @@ use lights::point_light;
 use obj_file::parse_obj;
 use patterns::checkers_pattern;
 use planes::plane;
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
+use sdl2::pixels::Color;
+use sdl2::rect::Point;
 use std::f64::consts::PI;
 use std::fs;
 use std::fs::File;
@@ -43,12 +45,10 @@ use std::io::prelude::*;
 use std::sync::mpsc::channel;
 use std::sync::Arc;
 use std::thread;
+use std::time::Duration;
 use transformations::*;
-use tuples::{color, point, vector, Color};
+use tuples::{color, f_u8, point, vector};
 use world::world;
-
-use piston_window::*;
-use sdl2_window::Sdl2Window;
 
 fn read_teapot() -> std::io::Result<Group> {
     let mut file = File::open("objs/teapot-low.obj")?;
@@ -58,8 +58,8 @@ fn read_teapot() -> std::io::Result<Group> {
 }
 
 fn main() {
-    let (pixel_sender, pixel_reciever) = channel::<(usize, usize, Color)>();
-    let (width, height) = (500, 300);
+    let (pixel_sender, pixel_reciever) = channel::<(usize, usize, tuples::Color)>();
+    let (width, height) = (2000, 2000);
 
     let waffle = checkers_pattern(color(1., 0.9, 0.1), color(0.9, 1.0, 0.1));
 
@@ -82,7 +82,7 @@ fn main() {
     )
     .inverse();
 
-    let threads = 8;
+    let threads = 16;
     let chunk_size = width * height / threads;
     (0..threads).for_each(|i| {
         let sender = pixel_sender.clone();
@@ -93,48 +93,57 @@ fn main() {
         });
     });
 
-    let mut window: PistonWindow<Sdl2Window> =
-        WindowSettings::new("Ray Tracer", [width as u32, height as u32])
-            .exit_on_esc(true)
-            .build()
-            .unwrap();
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
+    let window = video_subsystem
+        .window("render preview", width as u32, height as u32)
+        .position_centered()
+        .resizable()
+        .build()
+        .unwrap();
+    let mut view = window.into_canvas().build().unwrap();
+    view.set_logical_size(width as u32, height as u32).unwrap();
 
     let mut canvas = canvas(width, height);
 
-    while let Some(event) = window.next() {
+    let mut event_pump = sdl_context.event_pump().unwrap();
+    'running: loop {
         // store newly rendered pixels
-        while let Ok((x, y, color)) = pixel_reciever.try_recv() {
-            canvas.write_pixel(x, y, color);
+        while let Ok((x, y, c)) = pixel_reciever.try_recv() {
+            canvas.write_pixel(x, y, c);
         }
-        if let Some(Button::Keyboard(key)) = event.press_args() {
-            match key {
-                Key::S => {
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => break 'running,
+                Event::KeyDown {
+                    keycode: Some(Keycode::S),
+                    ..
+                } => {
                     fs::write("./canvas.ppm", canvas.to_ppm()).expect("Unable to write file");
                 }
                 _ => {}
-            };
+            }
         }
 
-        let view = window.draw_size();
-        let w = view.width / canvas.width as f64;
-        let h = view.height / canvas.height as f64;
-        let scale = if w < h { w } else { h };
-
-        // display rendered pixels
-        window.draw_2d(&event, |c, g, _d| {
-            clear([0.8, 0.8, 0.8, 1.], g);
-            for x in 0..canvas.width {
-                for y in 0..canvas.height {
-                    let color = canvas.pixel_at(x, y);
-                    let col = [color.red as f32, color.green as f32, color.blue as f32, 1.];
-                    rectangle(
-                        col,
-                        [x as f64 * scale, y as f64 * scale, scale, scale],
-                        c.transform,
-                        g,
-                    );
-                }
+        view.set_draw_color(Color::RGB(204, 204, 204));
+        view.clear();
+        for x in 0..canvas.width {
+            for y in 0..canvas.height {
+                let color = canvas.pixel_at(x, y);
+                view.set_draw_color(Color::RGB(
+                    f_u8(color.red),
+                    f_u8(color.green),
+                    f_u8(color.blue),
+                ));
+                view.draw_point(Point::new(x as i32, y as i32)).unwrap();
             }
-        });
+        }
+
+        view.present();
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
     }
 }
