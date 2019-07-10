@@ -1,5 +1,5 @@
 use rays::Ray;
-use shapes::Shape;
+use shapes::SyncShape;
 use std::sync::Arc;
 use tuples::Tuple;
 
@@ -8,7 +8,7 @@ pub const EPSILON: f64 = 1e-10;
 #[derive(Debug)]
 pub struct Intersection {
     pub t: f64,
-    pub object: Arc<Shape>,
+    pub object: Arc<SyncShape>,
 }
 
 impl PartialEq<Intersection> for Intersection {
@@ -17,7 +17,7 @@ impl PartialEq<Intersection> for Intersection {
     }
 }
 
-pub fn intersection(t: f64, object: Arc<Shape>) -> Intersection {
+pub fn intersection(t: f64, object: Arc<SyncShape>) -> Intersection {
     Intersection { t, object }
 }
 
@@ -35,7 +35,7 @@ pub struct Comps {
     pub eyev: Tuple,
     pub inside: bool,
     pub normalv: Tuple,
-    pub object: Arc<Shape>,
+    pub object: Arc<SyncShape>,
     pub over_point: Tuple,
     pub point: Tuple,
     pub under_point: Tuple,
@@ -83,7 +83,7 @@ impl Intersection {
     pub fn prepare_computations(self: &Self, r: &Ray, xs: &[Intersection]) -> Comps {
         let mut n1 = 0.;
         let mut n2 = 0.;
-        let mut containers: Vec<Arc<Shape>> = vec![];
+        let mut containers: Vec<Arc<SyncShape>> = vec![];
         for x in xs {
             if self.eq(x) {
                 n1 = containers
@@ -146,7 +146,7 @@ mod spec {
 
     #[test]
     fn an_intersection_encapsulates_t_and_object() {
-        let s = Arc::new(sphere());
+        let s: Arc<SyncShape> = Arc::new(sphere());
         let i = intersection(3.5, s.clone());
         assert_eq!(i.t, 3.5);
         assert_eq!(*i.object, *s);
@@ -275,15 +275,15 @@ mod spec {
     #[test]
     fn finding_n1_and_n2_at_various_intersections() {
         let mut a = glass_sphere();
-        a.set_invtransform(scaling(2., 2., 2.).inverse());
+        a.invtransform = scaling(2., 2., 2.).inverse();
         a.material.refractive_index = 1.5;
         let a = Arc::new(a);
         let mut b = glass_sphere();
-        b.set_invtransform(translation(0., 0., -0.25).inverse());
+        b.invtransform = translation(0., 0., -0.25).inverse();
         b.material.refractive_index = 2.0;
         let b = Arc::new(b);
         let mut c = glass_sphere();
-        c.set_invtransform(translation(0., 0., 0.25).inverse());
+        c.invtransform = translation(0., 0., 0.25).inverse();
         c.material.refractive_index = 2.5;
         let c = Arc::new(c);
         let r = ray(point(0., 0., -4.), vector(0., 0., 1.));

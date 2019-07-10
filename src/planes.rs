@@ -9,6 +9,7 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
+use shapes::SyncShape;
 use std::f64::INFINITY;
 use std::f64::NEG_INFINITY;
 use std::sync::Arc;
@@ -44,7 +45,7 @@ impl Shape for Plane {
     fn local_normal_at(&self, _local_point: Tuple) -> Tuple {
         vector(0., 1., 0.)
     }
-    fn local_intersects(&self, rc: Arc<Shape>, local_ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<SyncShape>, local_ray: Ray) -> Vec<Intersection> {
         if local_ray.direction.y.abs() < EPSILON {
             vec![]
         } else {
@@ -54,11 +55,6 @@ impl Shape for Plane {
     }
 }
 
-impl PartialEq<Plane> for Shape {
-    fn eq(&self, other: &Plane) -> bool {
-        self.material().eq(other.material()) && self.invtransform().eq(other.invtransform())
-    }
-}
 
 pub fn plane() -> Plane {
     Plane {
@@ -113,7 +109,7 @@ mod spec {
 
     #[test]
     fn a_ray_intersecting_a_plane_from_above() {
-        let p = Arc::new(plane());
+        let p: Arc<SyncShape> = Arc::new(plane());
         let r = ray(point(0., 1., 0.), vector(0., -1., 0.));
 
         let xs = p.local_intersects(p.clone(), r);
@@ -124,7 +120,7 @@ mod spec {
 
     #[test]
     fn a_ray_intersecting_a_plane_from_below() {
-        let p = Arc::new(plane());
+        let p: Arc<SyncShape> = Arc::new(plane());
         let r = ray(point(0., -1., 0.), vector(0., 1., 0.));
 
         let xs = p.local_intersects(p.clone(), r);

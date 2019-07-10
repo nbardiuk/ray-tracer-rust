@@ -4,7 +4,7 @@ use intersections::Intersection;
 use lights::PointLight;
 use rays::ray;
 use rays::Ray;
-use shapes::Shape;
+use shapes::SyncShape;
 use std::sync::Arc;
 use tuples::color;
 use tuples::Color;
@@ -13,7 +13,7 @@ use tuples::Tuple;
 pub const MAX_REFLECTIONS: i8 = 6;
 
 pub struct World {
-    pub objects: Vec<Arc<Shape>>,
+    pub objects: Vec<Arc<SyncShape>>,
     pub light_sources: Vec<PointLight>,
 }
 
@@ -146,8 +146,8 @@ pub mod spec {
         s1.material.specular = 0.2;
         let mut s2 = sphere();
         s2.invtransform = scaling(0.5, 0.5, 0.5).inverse();
-        let rc1 = Arc::new(s1);
-        let rc2 = Arc::new(s2);
+        let rc1: Arc<SyncShape> = Arc::new(s1);
+        let rc2: Arc<SyncShape> = Arc::new(s2);
 
         let w = default_world();
 

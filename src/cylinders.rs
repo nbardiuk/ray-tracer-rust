@@ -9,6 +9,7 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
+use shapes::SyncShape;
 use std::f64::INFINITY;
 use std::f64::NEG_INFINITY;
 use std::sync::Arc;
@@ -32,7 +33,7 @@ fn check_cap(ray: &Ray, t: f64) -> bool {
 }
 
 impl Cylinder {
-    fn intersect_caps(&self, rc: Arc<Shape>, ray: &Ray) -> Vec<Intersection> {
+    fn intersect_caps(&self, rc: Arc<SyncShape>, ray: &Ray) -> Vec<Intersection> {
         if !self.closed || ray.direction.y.abs() < EPSILON {
             vec![]
         } else {
@@ -44,7 +45,7 @@ impl Cylinder {
                 .collect()
         }
     }
-    fn intersect_sides(&self, rc: Arc<Shape>, ray: &Ray) -> Vec<Intersection> {
+    fn intersect_sides(&self, rc: Arc<SyncShape>, ray: &Ray) -> Vec<Intersection> {
         let dx = ray.direction.x;
         let dy = ray.direction.y;
         let dz = ray.direction.z;
@@ -101,7 +102,7 @@ impl Shape for Cylinder {
             vector(point.x, 0., point.z)
         }
     }
-    fn local_intersects(&self, rc: Arc<Shape>, ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<SyncShape>, ray: Ray) -> Vec<Intersection> {
         let sides = self.intersect_sides(rc.clone(), &ray);
         let caps = self.intersect_caps(rc.clone(), &ray);
         sides.into_iter().chain(caps.into_iter()).collect()

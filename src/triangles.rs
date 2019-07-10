@@ -9,6 +9,7 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
+use shapes::SyncShape;
 use std::sync::Arc;
 use tuples::Tuple;
 
@@ -44,7 +45,7 @@ impl Shape for Triangle {
     fn local_normal_at(&self, _point: Tuple) -> Tuple {
         self.normal.clone()
     }
-    fn local_intersects(&self, rc: Arc<Shape>, ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<SyncShape>, ray: Ray) -> Vec<Intersection> {
         let d_e2 = ray.direction.cross(&self.e2);
         let det = self.e1.dot(&d_e2);
         if det.abs() < EPSILON {

@@ -1,5 +1,5 @@
 use lights::PointLight;
-use patterns::Pattern;
+use patterns::SyncPattern;
 use shapes::Shape;
 use std::sync::Arc;
 use tuples::{color, Color, Tuple};
@@ -9,7 +9,7 @@ pub struct Material {
     pub ambient: f64,
     pub color: Color,
     pub diffuse: f64,
-    pub pattern: Option<Box<Pattern>>,
+    pub pattern: Option<Box<SyncPattern>>,
     pub refractive_index: f64,
     pub reflective: f64,
     pub shininess: f64,

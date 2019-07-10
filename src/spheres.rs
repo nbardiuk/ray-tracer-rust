@@ -7,6 +7,7 @@ use materials::{material, Material};
 use matrices::{identity_matrix, Matrix};
 use rays::Ray;
 use shapes::Shape;
+use shapes::SyncShape;
 use std::sync::Arc;
 use tuples::point;
 use tuples::Tuple;
@@ -53,7 +54,7 @@ impl Shape for Sphere {
     fn local_normal_at(&self, local_point: Tuple) -> Tuple {
         local_point - point(0., 0., 0.)
     }
-    fn local_intersects(&self, rc: Arc<Shape>, local_ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<SyncShape>, local_ray: Ray) -> Vec<Intersection> {
         let shape_to_ray = local_ray.origin - point(0., 0., 0.);
 
         let a = local_ray.direction.dot(&local_ray.direction);
@@ -69,12 +70,6 @@ impl Shape for Sphere {
                 intersection((-b + discriminant.sqrt()) / (2. * a), rc.clone()),
             )
         }
-    }
-}
-
-impl PartialEq<Sphere> for Shape {
-    fn eq(&self, other: &Sphere) -> bool {
-        self.material().eq(other.material()) && self.invtransform().eq(other.invtransform())
     }
 }
 
@@ -146,7 +141,7 @@ mod spec {
     #[test]
     fn intersect_sets_the_object_on_the_intersection() {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
-        let s = Arc::new(sphere());
+        let s: Arc<SyncShape> = Arc::new(sphere());
 
         let xs = s.local_intersects(s.clone(), r);
 

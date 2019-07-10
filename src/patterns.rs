@@ -5,6 +5,8 @@ use std::sync::Arc;
 use tuples::Color;
 use tuples::Tuple;
 
+pub type SyncPattern = Pattern + Sync + Send;
+
 pub trait Pattern {
     fn invtransform(&self) -> &Matrix;
     fn set_invtransform(&mut self, invtransform: Matrix);
@@ -17,14 +19,14 @@ pub trait Pattern {
     }
 }
 
-impl std::fmt::Debug for Pattern {
+impl std::fmt::Debug for SyncPattern {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "Pattern ({:?})", self.invtransform())
     }
 }
 
-impl PartialEq<Pattern> for Pattern {
-    fn eq(&self, other: &Pattern) -> bool {
+impl PartialEq<SyncPattern> for SyncPattern {
+    fn eq(&self, other: &SyncPattern) -> bool {
         self.invtransform().eq(other.invtransform())
     }
 }

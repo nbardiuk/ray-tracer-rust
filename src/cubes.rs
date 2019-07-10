@@ -9,6 +9,7 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
+use shapes::SyncShape;
 use std::sync::Arc;
 use tuples::point;
 use tuples::vector;
@@ -70,7 +71,7 @@ impl Shape for Cube {
             vector(0., 0., point.z)
         }
     }
-    fn local_intersects(&self, rc: Arc<Shape>, ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<SyncShape>, ray: Ray) -> Vec<Intersection> {
         let (xtmin, xtmax) = check_axis(ray.origin.x, ray.direction.x);
         let (ytmin, ytmax) = check_axis(ray.origin.y, ray.direction.y);
         let (ztmin, ztmax) = check_axis(ray.origin.z, ray.direction.z);

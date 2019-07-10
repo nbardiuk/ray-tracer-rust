@@ -6,6 +6,7 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
+use shapes::SyncShape;
 use std::sync::Arc;
 use tuples::point;
 use tuples::Tuple;
@@ -13,20 +14,20 @@ use tuples::Tuple;
 #[derive(Debug, PartialEq)]
 pub struct Group {
     pub invtransform: Matrix,
-    pub children: Vec<Arc<Shape>>,
+    pub children: Vec<Arc<SyncShape>>,
     bounds: Bounds,
 }
 
 impl Group {
-    pub fn add_child<T: 'static>(&mut self, child: T) -> Arc<Shape>
+    pub fn add_child<T: 'static>(&mut self, child: T) -> Arc<SyncShape>
     where
-        T: Shape,
+        T: Shape + Sync + Send,
     {
         let c = Arc::new(child);
         self.add_child_rc(c.clone());
         c
     }
-    pub fn add_child_rc(&mut self, c: Arc<Shape>) {
+    pub fn add_child_rc(&mut self, c: Arc<SyncShape>) {
         self.children.push(c);
 
         let bounds: Vec<Bounds> = self
@@ -39,7 +40,7 @@ impl Group {
         let first = i.next().unwrap();
         self.bounds = i.fold(first, |acc, b| acc + b);
     }
-    fn wrap(&self, child: Arc<Shape>) -> Arc<Shape> {
+    fn wrap(&self, child: Arc<SyncShape>) -> Arc<SyncShape> {
         Arc::new(Group {
             invtransform: self.invtransform.clone(),
             children: vec![child.clone()],
@@ -64,7 +65,7 @@ impl Shape for Group {
     fn world_to_object(&self, world_point: &Tuple) -> Tuple {
         self.children[0].world_to_object(&(self.invtransform() * world_point))
     }
-    fn local_intersects(&self, _rc: Arc<Shape>, ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, _rc: Arc<SyncShape>, ray: Ray) -> Vec<Intersection> {
         if self.children.len() > 0 && self.local_bounds().intersects(&ray) {
             let mut xs: Vec<Intersection> = self
                 .children

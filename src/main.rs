@@ -61,28 +61,28 @@ fn main() {
     let (pixel_sender, pixel_reciever) = channel::<(usize, usize, Color)>();
     let (width, height) = (500, 300);
 
+    let waffle = checkers_pattern(color(1., 0.9, 0.1), color(0.9, 1.0, 0.1));
+
+    let mut floor = plane();
+    floor.invtransform = rotation_x(PI / 2.).inverse();
+    floor.material.reflective = 0.6;
+    floor.material.pattern = Some(Box::new(waffle));
+
+    let teapod = read_teapot().unwrap();
+
+    let mut world = world();
+    world.objects = vec![Arc::new(floor), Arc::new(teapod)];
+    world.light_sources = vec![point_light(point(30., -30., 30.), color(1., 1., 1.))];
+
+    let mut camera = camera(width, height, PI / 3.);
+    camera.invtransform = view_transform(
+        &point(0., -30., 30.),
+        &point(0., 1., 0.),
+        &vector(0., 1., 0.),
+    )
+    .inverse();
+
     thread::spawn(move || {
-        let waffle = checkers_pattern(color(1., 0.9, 0.1), color(0.9, 1.0, 0.1));
-
-        let mut floor = plane();
-        floor.invtransform = rotation_x(PI / 2.).inverse();
-        floor.material.reflective = 0.6;
-        floor.material.pattern = Some(Box::new(waffle));
-
-        let teapod = read_teapot().unwrap();
-
-        let mut world = world();
-        world.objects = vec![Arc::new(floor), Arc::new(teapod)];
-        world.light_sources = vec![point_light(point(30., -30., 30.), color(1., 1., 1.))];
-
-        let mut camera = camera(width, height, PI / 3.);
-        camera.invtransform = view_transform(
-            &point(0., -30., 30.),
-            &point(0., 1., 0.),
-            &vector(0., 1., 0.),
-        )
-        .inverse();
-
         camera.render_async(world, pixel_sender);
     });
 
