@@ -5,7 +5,7 @@ use lights::PointLight;
 use rays::ray;
 use rays::Ray;
 use shapes::Shape;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::color;
 use tuples::Color;
 use tuples::Tuple;
@@ -13,7 +13,7 @@ use tuples::Tuple;
 pub const MAX_REFLECTIONS: i8 = 6;
 
 pub struct World {
-    pub objects: Vec<Rc<Shape>>,
+    pub objects: Vec<Arc<Shape>>,
     pub light_sources: Vec<PointLight>,
 }
 
@@ -125,7 +125,7 @@ pub mod spec {
         let mut s2 = sphere();
         s2.invtransform = scaling(0.5, 0.5, 0.5).inverse();
         World {
-            objects: vec![Rc::new(s1), Rc::new(s2)],
+            objects: vec![Arc::new(s1), Arc::new(s2)],
             light_sources: vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))],
         }
     }
@@ -146,8 +146,8 @@ pub mod spec {
         s1.material.specular = 0.2;
         let mut s2 = sphere();
         s2.invtransform = scaling(0.5, 0.5, 0.5).inverse();
-        let rc1 = Rc::new(s1);
-        let rc2 = Rc::new(s2);
+        let rc1 = Arc::new(s1);
+        let rc2 = Arc::new(s2);
 
         let w = default_world();
 
@@ -204,8 +204,8 @@ pub mod spec {
         let s1 = sphere();
         let mut s2 = sphere();
         s2.invtransform = translation(0., 0., 10.).inverse();
-        let s2rc = Rc::new(s2);
-        w.objects.append(&mut vec![Rc::new(s1), s2rc.clone()]);
+        let s2rc = Arc::new(s2);
+        w.objects.append(&mut vec![Arc::new(s1), s2rc.clone()]);
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
         let i = intersection(4., s2rc.clone());
 
@@ -246,7 +246,7 @@ pub mod spec {
         s2.invtransform = scaling(0.5, 0.5, 0.5).inverse();
         s2.material.ambient = 1.;
         let mut w = world();
-        w.objects = vec![Rc::new(s1), Rc::new(s2)];
+        w.objects = vec![Arc::new(s1), Arc::new(s2)];
         w.light_sources = vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))];
         let r = ray(point(0., 0., 0.75), vector(0., 0., -1.));
 
@@ -293,9 +293,9 @@ pub mod spec {
         let mut s2 = sphere();
         s2.invtransform = scaling(0.5, 0.5, 0.5).inverse();
         s2.material.ambient = 1.;
-        let shape = Rc::new(s2);
+        let shape = Arc::new(s2);
         let w = World {
-            objects: vec![Rc::new(s1), shape.clone()],
+            objects: vec![Arc::new(s1), shape.clone()],
             light_sources: vec![point_light(point(-10., 10., -10.), color(1., 1., 1.))],
         };
         let i = intersection(1., shape.clone());
@@ -311,7 +311,7 @@ pub mod spec {
         let mut shape = plane();
         shape.material.reflective = 0.5;
         shape.invtransform = translation(0., -1., 0.).inverse();
-        let s = Rc::new(shape);
+        let s = Arc::new(shape);
         let mut w = default_world();
         w.objects.push(s.clone());
         let sq2 = 2_f64.sqrt();
@@ -329,7 +329,7 @@ pub mod spec {
         let mut shape = plane();
         shape.material.reflective = 0.5;
         shape.invtransform = translation(0., -1., 0.).inverse();
-        let s = Rc::new(shape);
+        let s = Arc::new(shape);
         let mut w = default_world();
         w.objects.push(s.clone());
         let sq2 = 2_f64.sqrt();
@@ -352,7 +352,7 @@ pub mod spec {
         upper.invtransform = translation(0., 1., 0.).inverse();
         let mut w = world();
         w.light_sources = vec![point_light(point(0., 0., 0.), color(1., 1., 1.))];
-        w.objects = vec![Rc::new(lower), Rc::new(upper)];
+        w.objects = vec![Arc::new(lower), Arc::new(upper)];
         let r = ray(point(0., 0., 0.), vector(0., 1., 0.));
 
         assert_eq!(w.color_at(&r, MAX_REFLECTIONS), color(13.3, 13.3, 13.3)); //exits recursion
@@ -363,7 +363,7 @@ pub mod spec {
         let mut shape = plane();
         shape.material.reflective = 0.5;
         shape.invtransform = translation(0., -1., 0.).inverse();
-        let s = Rc::new(shape);
+        let s = Arc::new(shape);
         let mut w = default_world();
         w.objects.push(s.clone());
         let sq2 = 2_f64.sqrt();
@@ -399,7 +399,7 @@ pub mod spec {
         shape.material.specular = 0.2;
         shape.material.transparency = 1.;
         shape.material.refractive_index = 1.5;
-        let shape = Rc::new(shape);
+        let shape = Arc::new(shape);
         let mut w = default_world();
         w.objects[0] = shape.clone();
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
@@ -421,7 +421,7 @@ pub mod spec {
         shape.material.specular = 0.2;
         shape.material.transparency = 1.;
         shape.material.refractive_index = 1.5;
-        let shape = Rc::new(shape);
+        let shape = Arc::new(shape);
         let mut w = default_world();
         w.objects[0] = shape.clone();
         let sq2 = 2_f64.sqrt();
@@ -444,12 +444,12 @@ pub mod spec {
         a.material.specular = 0.2;
         a.material.ambient = 1.;
         a.material.pattern = Some(Box::new(test_pattern()));
-        let a = Rc::new(a);
+        let a = Arc::new(a);
         let mut b = sphere();
         b.invtransform = scaling(0.5, 0.5, 0.5).inverse();
         b.material.transparency = 1.;
         b.material.refractive_index = 1.5;
-        let b = Rc::new(b);
+        let b = Arc::new(b);
         let mut w = default_world();
         w.objects[0] = a.clone();
         w.objects[1] = b.clone();
@@ -473,12 +473,12 @@ pub mod spec {
         floor.invtransform = translation(0., -1., 0.).inverse();
         floor.material.transparency = 0.5;
         floor.material.refractive_index = 1.5;
-        let floor = Rc::new(floor);
+        let floor = Arc::new(floor);
         let mut ball = sphere();
         ball.material.color = color(1., 0., 0.);
         ball.material.ambient = 0.5;
         ball.invtransform = translation(0., -3.5, -0.5).inverse();
-        let ball = Rc::new(ball);
+        let ball = Arc::new(ball);
         let mut w = default_world();
         w.objects.push(floor.clone());
         w.objects.push(ball.clone());
@@ -499,12 +499,12 @@ pub mod spec {
         floor.material.reflective = 0.5;
         floor.material.transparency = 0.5;
         floor.material.refractive_index = 1.5;
-        let floor = Rc::new(floor);
+        let floor = Arc::new(floor);
         let mut ball = sphere();
         ball.material.color = color(1., 0., 0.);
         ball.material.ambient = 0.5;
         ball.invtransform = translation(0., -3.5, -0.5).inverse();
-        let ball = Rc::new(ball);
+        let ball = Arc::new(ball);
         let mut w = default_world();
         w.objects.push(floor.clone());
         w.objects.push(ball.clone());

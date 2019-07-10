@@ -4,7 +4,7 @@ use intersections::Intersection;
 use materials::Material;
 use matrices::Matrix;
 use rays::Ray;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::Tuple;
 
 pub trait Shape {
@@ -29,8 +29,8 @@ pub trait Shape {
         self.normal_to_world(local_normal)
     }
 
-    fn local_intersects(&self, rc: Rc<Shape>, local_ray: Ray) -> Vec<Intersection>;
-    fn intersects(&self, rc: Rc<Shape>, inray: &Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<Shape>, local_ray: Ray) -> Vec<Intersection>;
+    fn intersects(&self, rc: Arc<Shape>, inray: &Ray) -> Vec<Intersection> {
         let local_ray = inray.transform(self.invtransform());
         self.local_intersects(rc, local_ray)
     }
@@ -94,7 +94,7 @@ pub mod spec {
         fn set_invtransform(&mut self, invtransform: Matrix) {
             self.invtransform = invtransform;
         }
-        fn local_intersects(&self, _rc: Rc<Shape>, _local_ray: Ray) -> Vec<Intersection> {
+        fn local_intersects(&self, _rc: Arc<Shape>, _local_ray: Ray) -> Vec<Intersection> {
             vec![]
         }
         fn local_normal_at(&self, local_point: Tuple) -> Tuple {

@@ -9,7 +9,7 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
@@ -44,7 +44,7 @@ impl Shape for Triangle {
     fn local_normal_at(&self, _point: Tuple) -> Tuple {
         self.normal.clone()
     }
-    fn local_intersects(&self, rc: Rc<Shape>, ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<Shape>, ray: Ray) -> Vec<Intersection> {
         let d_e2 = ray.direction.cross(&self.e2);
         let det = self.e1.dot(&d_e2);
         if det.abs() < EPSILON {
@@ -123,7 +123,7 @@ mod spec {
 
     #[test]
     fn intersecting_a_ray_parallel_to_the_triangle() {
-        let t = Rc::new(triangle(
+        let t = Arc::new(triangle(
             point(0., 1., 0.),
             point(-1., 0., 0.),
             point(1., 0., 0.),
@@ -137,7 +137,7 @@ mod spec {
 
     #[test]
     fn a_ray_misses_p1_p3_edge() {
-        let t = Rc::new(triangle(
+        let t = Arc::new(triangle(
             point(0., 1., 0.),
             point(-1., 0., 0.),
             point(1., 0., 0.),
@@ -151,7 +151,7 @@ mod spec {
 
     #[test]
     fn a_ray_misses_p1_p2_edge() {
-        let t = Rc::new(triangle(
+        let t = Arc::new(triangle(
             point(0., 1., 0.),
             point(-1., 0., 0.),
             point(1., 0., 0.),
@@ -165,7 +165,7 @@ mod spec {
 
     #[test]
     fn a_ray_misses_p2_p3_edge() {
-        let t = Rc::new(triangle(
+        let t = Arc::new(triangle(
             point(0., 1., 0.),
             point(-1., 0., 0.),
             point(1., 0., 0.),
@@ -179,7 +179,7 @@ mod spec {
 
     #[test]
     fn a_ray_strikes_a_triangle() {
-        let t = Rc::new(triangle(
+        let t = Arc::new(triangle(
             point(0., 1., 0.),
             point(-1., 0., 0.),
             point(1., 0., 0.),

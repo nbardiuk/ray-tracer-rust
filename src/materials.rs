@@ -1,7 +1,7 @@
 use lights::PointLight;
 use patterns::Pattern;
 use shapes::Shape;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::{color, Color, Tuple};
 
 #[derive(Debug, PartialEq)]
@@ -34,7 +34,7 @@ pub fn material() -> Material {
 impl Material {
     pub fn lighting(
         &self,
-        object: Rc<Shape>,
+        object: Arc<Shape>,
         light: &PointLight,
         position: &Tuple,
         eye: &Tuple,
@@ -99,7 +99,7 @@ mod spec {
     #[test]
     fn lighting_with_the_eye_between_light_and_the_surface() {
         let m = material();
-        let object = Rc::new(sphere());
+        let object = Arc::new(sphere());
         let position = point(0., 0., 0.);
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
@@ -111,7 +111,7 @@ mod spec {
     #[test]
     fn lighting_with_the_eye_between_light_and_the_surface_eye_offset_45() {
         let m = material();
-        let object = Rc::new(sphere());
+        let object = Arc::new(sphere());
         let position = point(0., 0., 0.);
         let a = 2_f64.sqrt() / 2.;
         let eyev = vector(0., a, -a);
@@ -124,7 +124,7 @@ mod spec {
     #[test]
     fn lighting_with_the_eye_opposite_surface_light_offset_45() {
         let m = material();
-        let object = Rc::new(sphere());
+        let object = Arc::new(sphere());
         let position = point(0., 0., 0.);
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
@@ -136,7 +136,7 @@ mod spec {
     #[test]
     fn lighting_with_the_eye_in_the_path_of_reflection_vector() {
         let m = material();
-        let object = Rc::new(sphere());
+        let object = Arc::new(sphere());
         let position = point(0., 0., 0.);
         let a = 2_f64.sqrt() / 2.;
         let eyev = vector(0., -a, -a);
@@ -149,7 +149,7 @@ mod spec {
     #[test]
     fn lighting_with_the_light_behind_the_surface() {
         let m = material();
-        let object = Rc::new(sphere());
+        let object = Arc::new(sphere());
         let position = point(0., 0., 0.);
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
@@ -161,7 +161,7 @@ mod spec {
     #[test]
     fn lighting_with_the_surface_in_shadow() {
         let m = material();
-        let object = Rc::new(sphere());
+        let object = Arc::new(sphere());
         let position = point(0., 0., 0.);
         let eyev = vector(0., 0., -1.);
         let normalv = vector(0., 0., -1.);
@@ -176,7 +176,7 @@ mod spec {
     #[test]
     fn lighting_with_a_pattern_applied() {
         let mut m = material();
-        let object = Rc::new(sphere());
+        let object = Arc::new(sphere());
         m.pattern = Some(Box::new(stripe_pattern(
             color(1., 1., 1.),
             color(0., 0., 0.),

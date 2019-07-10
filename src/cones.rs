@@ -11,7 +11,7 @@ use rays::Ray;
 use shapes::Shape;
 use std::f64::INFINITY;
 use std::f64::NEG_INFINITY;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::point;
 use tuples::vector;
 use tuples::Tuple;
@@ -31,7 +31,7 @@ fn check_cap(ray: &Ray, t: f64, r: f64) -> bool {
     x.powi(2) + z.powi(2) <= r.powi(2)
 }
 impl Cone {
-    fn intersect_caps(&self, rc: Rc<Shape>, ray: &Ray) -> Vec<Intersection> {
+    fn intersect_caps(&self, rc: Arc<Shape>, ray: &Ray) -> Vec<Intersection> {
         if !self.closed || ray.direction.y.abs() < EPSILON {
             vec![]
         } else {
@@ -49,7 +49,7 @@ impl Cone {
                 .collect()
         }
     }
-    fn intersect_sides(&self, rc: Rc<Shape>, ray: &Ray) -> Vec<Intersection> {
+    fn intersect_sides(&self, rc: Arc<Shape>, ray: &Ray) -> Vec<Intersection> {
         let dx = ray.direction.x;
         let dy = ray.direction.y;
         let dz = ray.direction.z;
@@ -113,7 +113,7 @@ impl Shape for Cone {
             vector(point.x, y, point.z)
         }
     }
-    fn local_intersects(&self, rc: Rc<Shape>, ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<Shape>, ray: Ray) -> Vec<Intersection> {
         let sides = self.intersect_sides(rc.clone(), &ray);
         let caps = self.intersect_caps(rc.clone(), &ray);
         sides.into_iter().chain(caps.into_iter()).collect()
@@ -140,7 +140,7 @@ mod spec {
 
     #[test]
     fn intersecting_a_cone_with_a_ray() {
-        let c = Rc::new(cone());
+        let c = Arc::new(cone());
         for (origin, direction, t0, t1) in vec![
             (point(0., 0., -5.), vector(0., 0., 1.), 5., 5.),
             (point(0., 0., -5.), vector(1., 1., 1.), 8.66025, 8.66025),
@@ -155,7 +155,7 @@ mod spec {
     }
     #[test]
     fn intersecting_a_cone_with_a_ray_parallel_to_one_of_its_halves() {
-        let c = Rc::new(cone());
+        let c = Arc::new(cone());
 
         let xs = c.local_intersects(
             c.clone(),
@@ -171,7 +171,7 @@ mod spec {
         c.minimum = -0.5;
         c.maximum = 0.5;
         c.closed = true;
-        let c = Rc::new(c);
+        let c = Arc::new(c);
         for (origin, direction, count) in vec![
             (point(0., 0., -5.), vector(0., 1., 0.), 0),
             (point(0., 0., -0.25), vector(0., 1., 1.), 2),

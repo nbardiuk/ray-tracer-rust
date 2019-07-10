@@ -40,8 +40,8 @@ use std::f64::consts::PI;
 use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
-use std::rc::Rc;
 use std::sync::mpsc::channel;
+use std::sync::Arc;
 use std::thread;
 use transformations::*;
 use tuples::{color, point, vector, Color};
@@ -72,7 +72,7 @@ fn main() {
         let teapod = read_teapot().unwrap();
 
         let mut world = world();
-        world.objects = vec![Rc::new(floor), Rc::new(teapod)];
+        world.objects = vec![Arc::new(floor), Arc::new(teapod)];
         world.light_sources = vec![point_light(point(30., -30., 30.), color(1., 1., 1.))];
 
         let mut camera = camera(width, height, PI / 3.);

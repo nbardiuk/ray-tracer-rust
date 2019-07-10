@@ -11,7 +11,7 @@ use rays::Ray;
 use shapes::Shape;
 use std::f64::INFINITY;
 use std::f64::NEG_INFINITY;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::point;
 use tuples::vector;
 use tuples::Tuple;
@@ -32,7 +32,7 @@ fn check_cap(ray: &Ray, t: f64) -> bool {
 }
 
 impl Cylinder {
-    fn intersect_caps(&self, rc: Rc<Shape>, ray: &Ray) -> Vec<Intersection> {
+    fn intersect_caps(&self, rc: Arc<Shape>, ray: &Ray) -> Vec<Intersection> {
         if !self.closed || ray.direction.y.abs() < EPSILON {
             vec![]
         } else {
@@ -44,7 +44,7 @@ impl Cylinder {
                 .collect()
         }
     }
-    fn intersect_sides(&self, rc: Rc<Shape>, ray: &Ray) -> Vec<Intersection> {
+    fn intersect_sides(&self, rc: Arc<Shape>, ray: &Ray) -> Vec<Intersection> {
         let dx = ray.direction.x;
         let dy = ray.direction.y;
         let dz = ray.direction.z;
@@ -101,7 +101,7 @@ impl Shape for Cylinder {
             vector(point.x, 0., point.z)
         }
     }
-    fn local_intersects(&self, rc: Rc<Shape>, ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<Shape>, ray: Ray) -> Vec<Intersection> {
         let sides = self.intersect_sides(rc.clone(), &ray);
         let caps = self.intersect_caps(rc.clone(), &ray);
         sides.into_iter().chain(caps.into_iter()).collect()
@@ -128,7 +128,7 @@ mod spec {
 
     #[test]
     fn a_ray_misses_a_cylinder() {
-        let cyl = Rc::new(cylinder());
+        let cyl = Arc::new(cylinder());
         for (origin, direction) in vec![
             (point(1., 0., 0.), vector(0., 1., 0.)),
             (point(0., 0., 0.), vector(0., 1., 0.)),
@@ -141,7 +141,7 @@ mod spec {
     }
     #[test]
     fn a_ray_strikes_a_cylinder() {
-        let cyl = Rc::new(cylinder());
+        let cyl = Arc::new(cylinder());
         for (origin, direction, t0, t1) in vec![
             (point(1., 0., -5.), vector(0., 0., 1.), 5., 5.),
             (point(0., 0., -5.), vector(0., 0., 1.), 4., 6.),
@@ -171,7 +171,7 @@ mod spec {
         let mut cyl = cylinder();
         cyl.minimum = 1.;
         cyl.maximum = 2.;
-        let cyl = Rc::new(cyl);
+        let cyl = Arc::new(cyl);
         for (origin, direction, count) in vec![
             (point(0., 1.5, 0.), vector(0.1, 1., 0.), 0),
             (point(0., 3., -5.), vector(0., 0., 1.), 0),
@@ -191,7 +191,7 @@ mod spec {
         cyl.minimum = 1.;
         cyl.maximum = 2.;
         cyl.closed = true;
-        let cyl = Rc::new(cyl);
+        let cyl = Arc::new(cyl);
         for (origin, direction, count) in vec![
             (point(0., 3., 0.), vector(0., -1., 0.), 2),
             (point(0., 3., -2.), vector(0., -1., 2.), 2),

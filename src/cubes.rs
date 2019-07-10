@@ -9,7 +9,7 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::point;
 use tuples::vector;
 use tuples::Tuple;
@@ -70,7 +70,7 @@ impl Shape for Cube {
             vector(0., 0., point.z)
         }
     }
-    fn local_intersects(&self, rc: Rc<Shape>, ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<Shape>, ray: Ray) -> Vec<Intersection> {
         let (xtmin, xtmax) = check_axis(ray.origin.x, ray.direction.x);
         let (ytmin, ytmax) = check_axis(ray.origin.y, ray.direction.y);
         let (ztmin, ztmax) = check_axis(ray.origin.z, ray.direction.z);
@@ -115,7 +115,7 @@ mod spec {
 
     #[test]
     fn a_ray_intersects_a_cube() {
-        let c = Rc::new(cube());
+        let c = Arc::new(cube());
         for (origin, direction, t1, t2) in vec![
             (point(5., 0.5, 0.), vector(-1., 0., 0.), 4., 6.),
             (point(-5., 0.5, 0.), vector(1., 0., 0.), 4., 6.),
@@ -133,7 +133,7 @@ mod spec {
     }
     #[test]
     fn a_ray_misses_a_cube() {
-        let c = Rc::new(cube());
+        let c = Arc::new(cube());
         for (origin, direction) in vec![
             (point(-2., 0., 0.), vector(0.2673, 0.5345, 0.8018)),
             (point(0., -2., 0.), vector(0.8018, 0.2673, 0.5345)),
@@ -149,7 +149,7 @@ mod spec {
     }
     #[test]
     fn the_normal_on_the_surface_of_a_cube() {
-        let c = Rc::new(cube());
+        let c = Arc::new(cube());
         for (point, normal) in vec![
             (point(1., 0.5, -0.8), vector(1., 0., 0.)),
             (point(-1., -0.2, 0.9), vector(-1., 0., 0.)),

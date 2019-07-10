@@ -2,7 +2,7 @@ use groups::group;
 use groups::Group;
 use std::collections::HashMap;
 use std::num::ParseFloatError;
-use std::rc::Rc;
+use std::sync::Arc;
 use triangles::triangle;
 use triangles::Triangle;
 use tuples::point;
@@ -10,8 +10,8 @@ use tuples::Tuple;
 
 pub struct Parsed {
     vertices: Vec<Tuple>,
-    default_group: Rc<Group>,
-    groups: HashMap<String, Rc<Group>>,
+    default_group: Arc<Group>,
+    groups: HashMap<String, Arc<Group>>,
 }
 
 impl Parsed {
@@ -25,9 +25,9 @@ impl Parsed {
     }
     fn add_group(mut self, n: &str, g: Group) -> Parsed {
         if n == "" {
-            self.default_group = Rc::new(g);
+            self.default_group = Arc::new(g);
         } else {
-            self.groups.insert(n.to_string(), Rc::new(g));
+            self.groups.insert(n.to_string(), Arc::new(g));
         }
         self
     }
@@ -36,7 +36,7 @@ impl Parsed {
 pub fn parse_obj(text: &str) -> Parsed {
     let empty_result = Parsed {
         vertices: vec![],
-        default_group: Rc::new(group()),
+        default_group: Arc::new(group()),
         groups: HashMap::default(),
     };
     let lines = text.lines().into_iter();
@@ -84,10 +84,10 @@ fn parse_polygon(line: &str) -> Option<Vec<usize>> {
             line.trim_start_matches("f ")
                 .split(' ')
                 .filter_map(|n| {
-                    n.split('/').take(1).collect::<Vec<&str>>()[0].parse::<usize>().ok()
-                    // n.parse::<usize>().ok()
-                }
-                )
+                    n.split('/').take(1).collect::<Vec<&str>>()[0]
+                        .parse::<usize>()
+                        .ok()
+                })
                 .collect(),
         )
     }
@@ -165,12 +165,12 @@ f 1 3 4
         let t1 = g.children[0].clone();
         let t2 = g.children[1].clone();
 
-        let ex1: Rc<Shape> = Rc::new(triangle(
+        let ex1: Arc<Shape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[1].clone(),
             parsed.vertices[2].clone(),
         ));
-        let ex2: Rc<Shape> = Rc::new(triangle(
+        let ex2: Arc<Shape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[2].clone(),
             parsed.vertices[3].clone(),
@@ -196,12 +196,12 @@ f 1/2/3 3/2/1 4/2/1
         let t1 = g.children[0].clone();
         let t2 = g.children[1].clone();
 
-        let ex1: Rc<Shape> = Rc::new(triangle(
+        let ex1: Arc<Shape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[1].clone(),
             parsed.vertices[2].clone(),
         ));
-        let ex2: Rc<Shape> = Rc::new(triangle(
+        let ex2: Arc<Shape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[2].clone(),
             parsed.vertices[3].clone(),
@@ -229,17 +229,17 @@ f 1 2 3 4 5
         let t2 = g.children[1].clone();
         let t3 = g.children[2].clone();
 
-        let ex1: Rc<Shape> = Rc::new(triangle(
+        let ex1: Arc<Shape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[1].clone(),
             parsed.vertices[2].clone(),
         ));
-        let ex2: Rc<Shape> = Rc::new(triangle(
+        let ex2: Arc<Shape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[2].clone(),
             parsed.vertices[3].clone(),
         ));
-        let ex3: Rc<Shape> = Rc::new(triangle(
+        let ex3: Arc<Shape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[3].clone(),
             parsed.vertices[4].clone(),
@@ -269,12 +269,12 @@ f 1 3 4
         let g2 = parsed.groups.get("SecondGroup").unwrap();
         let t2 = g2.children[0].clone();
 
-        let ex1: Rc<Shape> = Rc::new(triangle(
+        let ex1: Arc<Shape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[1].clone(),
             parsed.vertices[2].clone(),
         ));
-        let ex2: Rc<Shape> = Rc::new(triangle(
+        let ex2: Arc<Shape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[2].clone(),
             parsed.vertices[3].clone(),
@@ -302,8 +302,8 @@ f 1 3 4
         let g2 = parsed.groups.get("SecondGroup").unwrap();
         let g = parsed.to_group();
 
-        let ex1: Rc<Shape> = g1.clone();
-        let ex2: Rc<Shape> = g2.clone();
+        let ex1: Arc<Shape> = g1.clone();
+        let ex2: Arc<Shape> = g2.clone();
 
         assert_that!(g.children[1].clone(), eq(ex1));
         assert_that!(g.children[2].clone(), eq(ex2));

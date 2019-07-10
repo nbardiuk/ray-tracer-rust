@@ -6,27 +6,27 @@ use matrices::identity_matrix;
 use matrices::Matrix;
 use rays::Ray;
 use shapes::Shape;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::point;
 use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Group {
     pub invtransform: Matrix,
-    pub children: Vec<Rc<Shape>>,
+    pub children: Vec<Arc<Shape>>,
     bounds: Bounds,
 }
 
 impl Group {
-    pub fn add_child<T: 'static>(&mut self, child: T) -> Rc<Shape>
+    pub fn add_child<T: 'static>(&mut self, child: T) -> Arc<Shape>
     where
         T: Shape,
     {
-        let c = Rc::new(child);
+        let c = Arc::new(child);
         self.add_child_rc(c.clone());
         c
     }
-    pub fn add_child_rc(&mut self, c: Rc<Shape>) {
+    pub fn add_child_rc(&mut self, c: Arc<Shape>) {
         self.children.push(c);
 
         let bounds: Vec<Bounds> = self
@@ -39,8 +39,8 @@ impl Group {
         let first = i.next().unwrap();
         self.bounds = i.fold(first, |acc, b| acc + b);
     }
-    fn wrap(&self, child: Rc<Shape>) -> Rc<Shape> {
-        Rc::new(Group {
+    fn wrap(&self, child: Arc<Shape>) -> Arc<Shape> {
+        Arc::new(Group {
             invtransform: self.invtransform.clone(),
             children: vec![child.clone()],
             bounds: child.local_bounds(),
@@ -64,7 +64,7 @@ impl Shape for Group {
     fn world_to_object(&self, world_point: &Tuple) -> Tuple {
         self.children[0].world_to_object(&(self.invtransform() * world_point))
     }
-    fn local_intersects(&self, _rc: Rc<Shape>, ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, _rc: Arc<Shape>, ray: Ray) -> Vec<Intersection> {
         if self.children.len() > 0 && self.local_bounds().intersects(&ray) {
             let mut xs: Vec<Intersection> = self
                 .children
@@ -134,7 +134,7 @@ mod spec {
     #[test]
     fn intersecting_a_ray_with_a_empty_group() {
         let g = group();
-        let g = Rc::new(g);
+        let g = Arc::new(g);
 
         let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
         let xs = g.local_intersects(g.clone(), r);
@@ -153,7 +153,7 @@ mod spec {
         let s1 = g.add_child(s1);
         let s2 = g.add_child(s2);
         g.add_child(s3);
-        let g = Rc::new(g);
+        let g = Arc::new(g);
 
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let xs = g.local_intersects(g.clone(), r);
@@ -172,7 +172,7 @@ mod spec {
         let mut g = group();
         g.invtransform = scaling(2., 2., 2.).inverse();
         g.add_child(s);
-        let g = Rc::new(g);
+        let g = Arc::new(g);
 
         let r = ray(point(10., 0., -10.), vector(0., 0., 1.));
         let xs = g.intersects(g.clone(), &r);

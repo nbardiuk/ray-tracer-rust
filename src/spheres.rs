@@ -7,7 +7,7 @@ use materials::{material, Material};
 use matrices::{identity_matrix, Matrix};
 use rays::Ray;
 use shapes::Shape;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::point;
 use tuples::Tuple;
 
@@ -53,7 +53,7 @@ impl Shape for Sphere {
     fn local_normal_at(&self, local_point: Tuple) -> Tuple {
         local_point - point(0., 0., 0.)
     }
-    fn local_intersects(&self, rc: Rc<Shape>, local_ray: Ray) -> Vec<Intersection> {
+    fn local_intersects(&self, rc: Arc<Shape>, local_ray: Ray) -> Vec<Intersection> {
         let shape_to_ray = local_ray.origin - point(0., 0., 0.);
 
         let a = local_ray.direction.dot(&local_ray.direction);
@@ -88,7 +88,7 @@ mod spec {
     #[test]
     fn a_ray_intersects_a_sphere_at_two_points() {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
 
         let xs = s.local_intersects(s.clone(), r);
 
@@ -100,7 +100,7 @@ mod spec {
     #[test]
     fn a_ray_intersects_a_sphere_at_tangent() {
         let r = ray(point(0., 1., -5.), vector(0., 0., 1.));
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
 
         let xs = s.local_intersects(s.clone(), r);
 
@@ -112,7 +112,7 @@ mod spec {
     #[test]
     fn a_ray_misses_a_sphere() {
         let r = ray(point(0., 2., -5.), vector(0., 0., 1.));
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
 
         let xs = s.local_intersects(s.clone(), r);
 
@@ -122,7 +122,7 @@ mod spec {
     #[test]
     fn a_ray_originates_inside_a_sphere() {
         let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
 
         let xs = s.local_intersects(s.clone(), r);
 
@@ -134,7 +134,7 @@ mod spec {
     #[test]
     fn a_sphere_is_behind_a_ray() {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
 
         let xs = s.local_intersects(s.clone(), r);
 
@@ -146,7 +146,7 @@ mod spec {
     #[test]
     fn intersect_sets_the_object_on_the_intersection() {
         let r = ray(point(0., 0., 5.), vector(0., 0., 1.));
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
 
         let xs = s.local_intersects(s.clone(), r);
 
@@ -160,7 +160,7 @@ mod spec {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let mut s = sphere();
         s.invtransform = scaling(2., 2., 2.).inverse();
-        let rc = Rc::new(s);
+        let rc = Arc::new(s);
 
         let xs = rc.intersects(rc.clone(), &r);
 
@@ -174,7 +174,7 @@ mod spec {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let mut s = sphere();
         s.invtransform = translation(5., 0., 0.).inverse();
-        let rc = Rc::new(s);
+        let rc = Arc::new(s);
 
         let xs = rc.intersects(rc.clone(), &r);
 

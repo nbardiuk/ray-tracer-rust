@@ -1,6 +1,6 @@
 use rays::Ray;
 use shapes::Shape;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::Tuple;
 
 pub const EPSILON: f64 = 1e-10;
@@ -8,7 +8,7 @@ pub const EPSILON: f64 = 1e-10;
 #[derive(Debug)]
 pub struct Intersection {
     pub t: f64,
-    pub object: Rc<Shape>,
+    pub object: Arc<Shape>,
 }
 
 impl PartialEq<Intersection> for Intersection {
@@ -17,7 +17,7 @@ impl PartialEq<Intersection> for Intersection {
     }
 }
 
-pub fn intersection(t: f64, object: Rc<Shape>) -> Intersection {
+pub fn intersection(t: f64, object: Arc<Shape>) -> Intersection {
     Intersection { t, object }
 }
 
@@ -35,7 +35,7 @@ pub struct Comps {
     pub eyev: Tuple,
     pub inside: bool,
     pub normalv: Tuple,
-    pub object: Rc<Shape>,
+    pub object: Arc<Shape>,
     pub over_point: Tuple,
     pub point: Tuple,
     pub under_point: Tuple,
@@ -83,7 +83,7 @@ impl Intersection {
     pub fn prepare_computations(self: &Self, r: &Ray, xs: &[Intersection]) -> Comps {
         let mut n1 = 0.;
         let mut n2 = 0.;
-        let mut containers: Vec<Rc<Shape>> = vec![];
+        let mut containers: Vec<Arc<Shape>> = vec![];
         for x in xs {
             if self.eq(x) {
                 n1 = containers
@@ -146,7 +146,7 @@ mod spec {
 
     #[test]
     fn an_intersection_encapsulates_t_and_object() {
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
         let i = intersection(3.5, s.clone());
         assert_eq!(i.t, 3.5);
         assert_eq!(*i.object, *s);
@@ -154,7 +154,7 @@ mod spec {
 
     #[test]
     fn aggreagating_intersections() {
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
         let i1 = intersection(1., s.clone());
         let i2 = intersection(2., s.clone());
 
@@ -167,7 +167,7 @@ mod spec {
 
     #[test]
     fn the_hit_when_all_intersections_have_positive_t() {
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
         let i1 = intersection(1., s.clone());
         let i2 = intersection(2., s.clone());
         let xs = intersections(i1, i2);
@@ -177,7 +177,7 @@ mod spec {
 
     #[test]
     fn the_hit_when_some_intersections_have_negative_t() {
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
         let i1 = intersection(-1., s.clone());
         let i2 = intersection(1., s.clone());
         let xs = intersections(i2, i1);
@@ -187,7 +187,7 @@ mod spec {
 
     #[test]
     fn the_hit_when_all_intersections_have_negative_t() {
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
         let i1 = intersection(-2., s.clone());
         let i2 = intersection(-1., s.clone());
         let xs = intersections(i1, i2);
@@ -197,7 +197,7 @@ mod spec {
 
     #[test]
     fn the_hit_is_always_the_lowest_non_negative_intersection() {
-        let s = Rc::new(sphere());
+        let s = Arc::new(sphere());
         let i1 = intersection(5., s.clone());
         let i2 = intersection(7., s.clone());
         let i3 = intersection(-3., s.clone());
@@ -210,7 +210,7 @@ mod spec {
     #[test]
     fn precomputes_the_state_of_an_intersection() {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
-        let shape = Rc::new(sphere());
+        let shape = Arc::new(sphere());
         let i = intersection(4., shape);
 
         let comps = i.prepare_computations(&r, &[]);
@@ -225,7 +225,7 @@ mod spec {
     #[test]
     fn the_hit_when_an_intersection_occurs_on_the_outside() {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
-        let shape = Rc::new(sphere());
+        let shape = Arc::new(sphere());
         let i = intersection(4., shape);
 
         let comps = i.prepare_computations(&r, &[]);
@@ -236,7 +236,7 @@ mod spec {
     #[test]
     fn the_hit_when_an_intersection_occurs_on_the_inside() {
         let r = ray(point(0., 0., 0.), vector(0., 0., 1.));
-        let shape = Rc::new(sphere());
+        let shape = Arc::new(sphere());
         let i = intersection(1., shape);
 
         let comps = i.prepare_computations(&r, &[]);
@@ -252,7 +252,7 @@ mod spec {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let mut shape = sphere();
         shape.invtransform = translation(0., 0., 1.).inverse();
-        let i = intersection(5., Rc::new(shape));
+        let i = intersection(5., Arc::new(shape));
 
         let comps = i.prepare_computations(&r, &[]);
 
@@ -265,7 +265,7 @@ mod spec {
         let sq2 = 2.0_f64.sqrt();
         let shape = plane();
         let r = ray(point(0., 1., -1.), vector(0., -sq2 / 2., sq2 / 2.));
-        let i = intersection(sq2, Rc::new(shape));
+        let i = intersection(sq2, Arc::new(shape));
 
         let comps = i.prepare_computations(&r, &[]);
 
@@ -277,15 +277,15 @@ mod spec {
         let mut a = glass_sphere();
         a.set_invtransform(scaling(2., 2., 2.).inverse());
         a.material.refractive_index = 1.5;
-        let a = Rc::new(a);
+        let a = Arc::new(a);
         let mut b = glass_sphere();
         b.set_invtransform(translation(0., 0., -0.25).inverse());
         b.material.refractive_index = 2.0;
-        let b = Rc::new(b);
+        let b = Arc::new(b);
         let mut c = glass_sphere();
         c.set_invtransform(translation(0., 0., 0.25).inverse());
         c.material.refractive_index = 2.5;
-        let c = Rc::new(c);
+        let c = Arc::new(c);
         let r = ray(point(0., 0., -4.), vector(0., 0., 1.));
         let xs = &vec![
             intersection(2., a.clone()),
@@ -317,7 +317,7 @@ mod spec {
         let r = ray(point(0., 0., -5.), vector(0., 0., 1.));
         let mut shape = glass_sphere();
         shape.invtransform = translation(0., 0., 1.).inverse();
-        let shape = Rc::new(shape);
+        let shape = Arc::new(shape);
         let i = intersection(5., shape.clone());
         let xs = vec![i];
 
@@ -329,7 +329,7 @@ mod spec {
 
     #[test]
     fn the_schlick_approximation_under_total_internal_reflection() {
-        let shape = Rc::new(glass_sphere());
+        let shape = Arc::new(glass_sphere());
         let sq2 = 2.0_f64.sqrt();
         let r = ray(point(0., 0., sq2 / 2.), vector(0., 1., 0.));
         let xs = vec![
@@ -345,7 +345,7 @@ mod spec {
 
     #[test]
     fn the_schick_approximation_with_a_perpendicular_viewing_angle() {
-        let shape = Rc::new(glass_sphere());
+        let shape = Arc::new(glass_sphere());
         let r = ray(point(0., 0., 0.), vector(0., 1., 0.));
         let xs = vec![
             intersection(-1., shape.clone()),
@@ -360,7 +360,7 @@ mod spec {
 
     #[test]
     fn the_schick_approximation_with_small_angle_and_n2_gt_n1() {
-        let shape = Rc::new(glass_sphere());
+        let shape = Arc::new(glass_sphere());
         let r = ray(point(0., 0.99, -2.), vector(0., 0., 1.));
         let xs = vec![intersection(1.8589, shape.clone())];
 

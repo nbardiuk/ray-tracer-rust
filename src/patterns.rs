@@ -1,7 +1,7 @@
 use matrices::identity_matrix;
 use matrices::Matrix;
 use shapes::Shape;
-use std::rc::Rc;
+use std::sync::Arc;
 use tuples::Color;
 use tuples::Tuple;
 
@@ -10,7 +10,7 @@ pub trait Pattern {
     fn set_invtransform(&mut self, invtransform: Matrix);
 
     fn at(&self, point: &Tuple) -> Color;
-    fn at_shape(&self, shape: Rc<Shape>, world_point: &Tuple) -> Color {
+    fn at_shape(&self, shape: Arc<Shape>, world_point: &Tuple) -> Color {
         let shape_point = shape.world_to_object(world_point);
         let pattern_point = self.invtransform() * &shape_point;
         self.at(&pattern_point)
@@ -221,7 +221,7 @@ pub mod spec {
         object.invtransform = scaling(2., 2., 2.).inverse();
         let pattern = test_pattern();
 
-        let c = pattern.at_shape(Rc::new(object), &point(2., 3., 4.));
+        let c = pattern.at_shape(Arc::new(object), &point(2., 3., 4.));
 
         assert_eq!(c, color(1., 1.5, 2.));
     }
@@ -232,7 +232,7 @@ pub mod spec {
         let mut pattern = test_pattern();
         pattern.set_invtransform(scaling(2., 2., 2.).inverse());
 
-        let c = pattern.at_shape(Rc::new(object), &point(2., 3., 4.));
+        let c = pattern.at_shape(Arc::new(object), &point(2., 3., 4.));
 
         assert_eq!(c, color(1., 1.5, 2.));
     }
@@ -244,7 +244,7 @@ pub mod spec {
         let mut pattern = test_pattern();
         pattern.set_invtransform(translation(0.5, 1., 1.5).inverse());
 
-        let c = pattern.at_shape(Rc::new(object), &point(2.5, 3., 3.5));
+        let c = pattern.at_shape(Arc::new(object), &point(2.5, 3., 3.5));
 
         assert_eq!(c, color(0.75, 0.5, 0.25));
     }
