@@ -2,16 +2,16 @@ use canvas::canvas;
 use canvas::Canvas;
 use matrices::identity_matrix;
 use matrices::Matrix;
-use rand::seq::SliceRandom;
-use rand::thread_rng;
 use rays::ray;
 use rays::Ray;
+use std::ops::Range;
 use std::sync::mpsc::Sender;
 use tuples::point;
 use tuples::Color;
 use world::World;
 use world::MAX_REFLECTIONS;
 
+#[derive(Clone)]
 pub struct Camera {
     hsize: usize,
     vsize: usize,
@@ -73,15 +73,21 @@ impl Camera {
                 let color = world.color_at(&ray, MAX_REFLECTIONS);
                 canvas.write_pixel(x, y, color);
             }
-            eprint!("rendering {} \r", (100.0 * x as f64) / (canvas.width as f64))
+            eprint!(
+                "rendering {} \r",
+                (100.0 * x as f64) / (canvas.width as f64)
+            )
         }
         canvas
     }
 
-    pub fn render_async(self: &Camera, world: World, pixel_sender: Sender<(usize, usize, Color)>) -> () {
-        let mut vec: Vec<usize> = (0..self.hsize * self.vsize).collect();
-        vec.shuffle(&mut thread_rng());
-        for i in vec {
+    pub fn render_async(
+        self: &Camera,
+        world: World,
+        pixel_sender: Sender<(usize, usize, Color)>,
+        ix: Range<usize>,
+    ) -> () {
+        for i in ix {
             let x = i % self.hsize;
             let y = i / self.hsize;
             let ray = self.ray_for_pixel(x, y);

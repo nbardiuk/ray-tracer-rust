@@ -82,8 +82,15 @@ fn main() {
     )
     .inverse();
 
-    thread::spawn(move || {
-        camera.render_async(world, pixel_sender);
+    let threads = 8;
+    let chunk_size = width * height / threads;
+    (0..threads).for_each(|i| {
+        let sender = pixel_sender.clone();
+        let c = camera.clone();
+        let w = world.clone();
+        thread::spawn(move || {
+            c.render_async(w, sender, chunk_size * i..chunk_size * (i + 1));
+        });
     });
 
     let mut window: PistonWindow<Sdl2Window> =

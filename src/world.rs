@@ -12,6 +12,7 @@ use tuples::Tuple;
 
 pub const MAX_REFLECTIONS: i8 = 6;
 
+#[derive(Clone)]
 pub struct World {
     pub objects: Vec<Arc<SyncShape>>,
     pub light_sources: Vec<PointLight>,
