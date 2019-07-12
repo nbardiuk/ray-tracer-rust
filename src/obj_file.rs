@@ -1,5 +1,6 @@
-use groups::group;
+use groups::group_with_children;
 use groups::Group;
+use shapes::SyncShape;
 use std::collections::HashMap;
 use std::num::ParseFloatError;
 use std::sync::Arc;
@@ -10,25 +11,26 @@ use tuples::Tuple;
 
 pub struct Parsed {
     vertices: Vec<Tuple>,
-    default_group: Arc<Group>,
     groups: HashMap<String, Arc<Group>>,
 }
 
 impl Parsed {
+    fn default_group(&self) -> Arc<Group> {
+        self.groups.get("").unwrap().clone()
+    }
     pub fn to_group(&self) -> Group {
-        let mut g = group();
-        g.add_child_rc(self.default_group.clone());
-        self.groups.iter().for_each(|(_k, v)| {
-            g.add_child_rc(v.clone());
-        });
-        g
+        group_with_children(
+            self.groups
+                .values()
+                .map(|v| {
+                    let s: Arc<SyncShape> = v.clone();
+                    s
+                })
+                .collect(),
+        )
     }
     fn add_group(mut self, n: &str, g: Group) -> Parsed {
-        if n == "" {
-            self.default_group = Arc::new(g);
-        } else {
-            self.groups.insert(n.to_string(), Arc::new(g));
-        }
+        self.groups.insert(n.to_string(), Arc::new(g));
         self
     }
 }
@@ -36,28 +38,27 @@ impl Parsed {
 pub fn parse_obj(text: &str) -> Parsed {
     let empty_result = Parsed {
         vertices: vec![],
-        default_group: Arc::new(group()),
         groups: HashMap::default(),
     };
-    let lines = text.lines().into_iter();
-    let (parsed, last_name, last_group) = lines.fold(
-        (empty_result, "", group()),
+    let (parsed, last_name, last_group) = text.lines().fold(
+        (empty_result, "", vec![]),
         |(mut parsed, mut last_name, mut last_group), line| {
             if let Ok(vertex) = parse_vertex(line) {
                 parsed.vertices.push(vertex);
             } else if let Some(polygon) = parse_polygon(line) {
                 for triangle in fan_triangulation(&polygon, &parsed.vertices) {
-                    last_group.add_child(triangle);
+                    let t: Arc<SyncShape> = Arc::new(triangle);
+                    last_group.push(t);
                 }
             } else if let Some(group_name) = parse_group(line) {
-                parsed = parsed.add_group(last_name, last_group);
-                last_group = group();
+                parsed = parsed.add_group(last_name, group_with_children(last_group));
+                last_group = vec![];
                 last_name = group_name;
             }
             (parsed, last_name, last_group)
         },
     );
-    parsed.add_group(last_name, last_group)
+    parsed.add_group(last_name, group_with_children(last_group))
 }
 
 fn parse_vertex(line: &str) -> Result<Tuple, ParseFloatError> {
@@ -83,11 +84,7 @@ fn parse_polygon(line: &str) -> Option<Vec<usize>> {
         Some(
             line.trim_start_matches("f ")
                 .split(' ')
-                .filter_map(|n| {
-                    n.split('/').take(1).collect::<Vec<&str>>()[0]
-                        .parse::<usize>()
-                        .ok()
-                })
+                .filter_map(|n| n.split('/').next().unwrap().parse::<usize>().ok())
                 .collect(),
         )
     }
@@ -114,7 +111,6 @@ fn fan_triangulation(polygon: &[usize], vertices: &[Tuple]) -> Vec<Triangle> {
 mod spec {
     use super::*;
     use hamcrest2::*;
-    use shapes::Shape;
 
     #[test]
     fn ignoring_unrecognized_lines() {
@@ -161,23 +157,21 @@ f 1 3 4
         "#;
 
         let parsed = parse_obj(file);
-        let g = parsed.default_group;
-        let t1 = g.children[0].clone();
-        let t2 = g.children[1].clone();
+        let g = parsed.default_group();
 
-        let ex1: Arc<Shape> = Arc::new(triangle(
+        let ex1: Arc<SyncShape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[1].clone(),
             parsed.vertices[2].clone(),
         ));
-        let ex2: Arc<Shape> = Arc::new(triangle(
+        let ex2: Arc<SyncShape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[2].clone(),
             parsed.vertices[3].clone(),
         ));
 
-        assert_that!(t1, eq(ex1));
-        assert_that!(t2, eq(ex2));
+        assert_that!(&g.children[0..], contains(ex1));
+        assert_that!(&g.children[0..], contains(ex2));
     }
     #[test]
     fn parsing_triangle_faces_with_normals_textures() {
@@ -192,23 +186,21 @@ f 1/2/3 3/2/1 4/2/1
         "#;
 
         let parsed = parse_obj(file);
-        let g = parsed.default_group;
-        let t1 = g.children[0].clone();
-        let t2 = g.children[1].clone();
+        let g = parsed.default_group();
 
-        let ex1: Arc<Shape> = Arc::new(triangle(
+        let ex1: Arc<SyncShape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[1].clone(),
             parsed.vertices[2].clone(),
         ));
-        let ex2: Arc<Shape> = Arc::new(triangle(
+        let ex2: Arc<SyncShape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[2].clone(),
             parsed.vertices[3].clone(),
         ));
 
-        assert_that!(t1, eq(ex1));
-        assert_that!(t2, eq(ex2));
+        assert_that!(&g.children[0..], contains(ex1));
+        assert_that!(&g.children[0..], contains(ex2));
     }
 
     #[test]
@@ -224,30 +216,27 @@ f 1 2 3 4 5
         "#;
 
         let parsed = parse_obj(file);
-        let g = parsed.default_group;
-        let t1 = g.children[0].clone();
-        let t2 = g.children[1].clone();
-        let t3 = g.children[2].clone();
+        let g = parsed.default_group();
 
-        let ex1: Arc<Shape> = Arc::new(triangle(
+        let ex1: Arc<SyncShape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[1].clone(),
             parsed.vertices[2].clone(),
         ));
-        let ex2: Arc<Shape> = Arc::new(triangle(
+        let ex2: Arc<SyncShape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[2].clone(),
             parsed.vertices[3].clone(),
         ));
-        let ex3: Arc<Shape> = Arc::new(triangle(
+        let ex3: Arc<SyncShape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[3].clone(),
             parsed.vertices[4].clone(),
         ));
 
-        assert_that!(t1, eq(ex1));
-        assert_that!(t2, eq(ex2));
-        assert_that!(t3, eq(ex3));
+        assert_that!(&g.children[0..], contains(ex1));
+        assert_that!(&g.children[0..], contains(ex2));
+        assert_that!(&g.children[0..], contains(ex3));
     }
     #[test]
     fn triangles_in_groups() {
@@ -265,23 +254,21 @@ f 1 3 4
 
         let parsed = parse_obj(file);
         let g1 = parsed.groups.get("FirstGroup").unwrap();
-        let t1 = g1.children[0].clone();
         let g2 = parsed.groups.get("SecondGroup").unwrap();
-        let t2 = g2.children[0].clone();
 
-        let ex1: Arc<Shape> = Arc::new(triangle(
+        let ex1: Arc<SyncShape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[1].clone(),
             parsed.vertices[2].clone(),
         ));
-        let ex2: Arc<Shape> = Arc::new(triangle(
+        let ex2: Arc<SyncShape> = Arc::new(triangle(
             parsed.vertices[0].clone(),
             parsed.vertices[2].clone(),
             parsed.vertices[3].clone(),
         ));
 
-        assert_that!(t1, eq(ex1));
-        assert_that!(t2, eq(ex2));
+        assert_that!(&g1.children[0..], contains(ex1));
+        assert_that!(&g2.children[0..], contains(ex2));
     }
     #[test]
     fn converting_an_obj_file_to_a_group() {
@@ -302,10 +289,10 @@ f 1 3 4
         let g2 = parsed.groups.get("SecondGroup").unwrap();
         let g = parsed.to_group();
 
-        let ex1: Arc<Shape> = g1.clone();
-        let ex2: Arc<Shape> = g2.clone();
+        let ex1: Arc<SyncShape> = g1.clone();
+        let ex2: Arc<SyncShape> = g2.clone();
 
-        assert_that!(g.children[1].clone(), eq(ex1));
-        assert_that!(g.children[2].clone(), eq(ex2));
+        assert_that!(&g.children[0..], contains(ex1));
+        assert_that!(&g.children[0..], contains(ex2));
     }
 }

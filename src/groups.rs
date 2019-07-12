@@ -1,6 +1,7 @@
 use bounds::bound_single;
 use bounds::Bounds;
 use intersections::Intersection;
+use materials::material;
 use materials::Material;
 use matrices::identity_matrix;
 use matrices::Matrix;
@@ -16,6 +17,7 @@ pub struct Group {
     pub invtransform: Matrix,
     pub children: Vec<Arc<SyncShape>>,
     bounds: Bounds,
+    material: Material,
 }
 
 impl Group {
@@ -45,6 +47,7 @@ impl Group {
             invtransform: self.invtransform.clone(),
             children: vec![child.clone()],
             bounds: child.local_bounds(),
+            material: material(),
         })
     }
 }
@@ -53,7 +56,11 @@ impl Shape for Group {
         self.bounds.clone()
     }
     fn material(&self) -> &Material {
-        self.children[0].material()
+        if self.children.is_empty() {
+            &self.material
+        } else {
+            self.children[0].material()
+        }
     }
     fn set_material(&mut self, _material: Material) {}
     fn invtransform(&self) -> &Matrix {
@@ -97,6 +104,22 @@ pub fn group() -> Group {
         invtransform: identity_matrix(),
         children: vec![],
         bounds: bound_single(point(0., 0., 0.)),
+        material: material(),
+    }
+}
+pub fn group_with_children(children: Vec<Arc<SyncShape>>) -> Group {
+    let bounds = if children.len() > 0 {
+        let mut i = children.iter().map(|c| c.local_bounds()).into_iter();
+        let first = i.next().unwrap();
+        i.fold(first, |acc, b| acc + b)
+    } else {
+        bound_single(point(0., 0., 0.))
+    };
+    Group {
+        invtransform: identity_matrix(),
+        children,
+        bounds,
+        material: material(),
     }
 }
 #[cfg(test)]
