@@ -1,6 +1,6 @@
-use canvas::Canvas;
-use tuples::f_u8;
-use tuples::Color;
+use crate::canvas::Canvas;
+use crate::tuples::f_u8;
+use crate::tuples::Color;
 
 impl Canvas {
     pub fn to_ppm(&self) -> String {
@@ -48,8 +48,8 @@ fn colors(c: &Color) -> Vec<String> {
 
 #[cfg(test)]
 mod spec {
-    use canvas::canvas;
-    use tuples::color;
+    use crate::canvas::canvas;
+    use crate::tuples::color;
 
     #[test]
     fn constructing_the_ppm_header() {

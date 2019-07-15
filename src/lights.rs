@@ -1,4 +1,4 @@
-use tuples::{Color, Tuple};
+use crate::tuples::{Color, Tuple};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PointLight {
@@ -16,7 +16,7 @@ pub fn point_light(position: Tuple, intensity: Color) -> PointLight {
 #[cfg(test)]
 mod spec {
     use super::*;
-    use tuples::{color, point};
+    use crate::tuples::{color, point};
 
     #[test]
     fn a_point_light_has_a_position_and_intensity() {

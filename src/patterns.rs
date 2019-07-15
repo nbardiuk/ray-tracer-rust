@@ -1,9 +1,9 @@
-use matrices::identity_matrix;
-use matrices::Matrix;
-use shapes::Shape;
+use crate::matrices::identity_matrix;
+use crate::matrices::Matrix;
+use crate::shapes::Shape;
+use crate::tuples::Color;
+use crate::tuples::Tuple;
 use std::sync::Arc;
-use tuples::Color;
-use tuples::Tuple;
 
 pub type SyncPattern = Pattern + Sync + Send;
 
@@ -145,12 +145,12 @@ pub fn checkers_pattern(a: Color, b: Color) -> Checkers {
 #[cfg(test)]
 pub mod spec {
     use super::*;
-    use spheres::sphere;
-    use transformations::scaling;
-    use transformations::translation;
-    use tuples::color;
-    use tuples::point;
-    use tuples::Color;
+    use crate::spheres::sphere;
+    use crate::transformations::scaling;
+    use crate::transformations::translation;
+    use crate::tuples::color;
+    use crate::tuples::point;
+    use crate::tuples::Color;
 
     fn black() -> Color {
         color(0., 0., 0.)

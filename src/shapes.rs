@@ -1,10 +1,10 @@
-use bounds::Bounds;
-use intersections::Intersection;
-use materials::Material;
-use matrices::Matrix;
-use rays::Ray;
+use crate::bounds::Bounds;
+use crate::intersections::Intersection;
+use crate::materials::Material;
+use crate::matrices::Matrix;
+use crate::rays::Ray;
+use crate::tuples::Tuple;
 use std::sync::Arc;
-use tuples::Tuple;
 
 pub type SyncShape = Shape + Sync + Send;
 
@@ -74,21 +74,21 @@ impl PartialEq<Shape> for Shape {
 #[cfg(test)]
 pub mod spec {
     use super::*;
-    use bounds::bound_single;
-    use groups::group;
-    use materials::material;
-    use materials::Material;
-    use matrices::identity_matrix;
-    use matrices::Matrix;
-    use rays::Ray;
-    use spheres::sphere;
+    use crate::bounds::bound_single;
+    use crate::groups::group;
+    use crate::materials::material;
+    use crate::materials::Material;
+    use crate::matrices::identity_matrix;
+    use crate::matrices::Matrix;
+    use crate::rays::Ray;
+    use crate::spheres::sphere;
+    use crate::transformations::rotation_y;
+    use crate::transformations::rotation_z;
+    use crate::transformations::scaling;
+    use crate::transformations::translation;
+    use crate::tuples::point;
+    use crate::tuples::vector;
     use std::f64::consts::PI;
-    use transformations::rotation_y;
-    use transformations::rotation_z;
-    use transformations::scaling;
-    use transformations::translation;
-    use tuples::point;
-    use tuples::vector;
 
     #[derive(Debug, PartialEq)]
     pub struct TestShape {

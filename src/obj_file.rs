@@ -1,13 +1,13 @@
-use groups::group_with_children;
-use groups::Group;
-use shapes::SyncShape;
+use crate::groups::group_with_children;
+use crate::groups::Group;
+use crate::shapes::SyncShape;
+use crate::triangles::triangle;
+use crate::triangles::Triangle;
+use crate::tuples::point;
+use crate::tuples::Tuple;
 use std::collections::HashMap;
 use std::num::ParseFloatError;
 use std::sync::Arc;
-use triangles::triangle;
-use triangles::Triangle;
-use tuples::point;
-use tuples::Tuple;
 
 pub struct Parsed {
     vertices: Vec<Tuple>,
@@ -110,7 +110,7 @@ fn fan_triangulation(polygon: &[usize], vertices: &[Tuple]) -> Vec<Triangle> {
 #[cfg(test)]
 mod spec {
     use super::*;
-    use hamcrest2::*;
+    use hamcrest2::prelude::*;
 
     #[test]
     fn ignoring_unrecognized_lines() {

@@ -1,7 +1,7 @@
-use rays::Ray;
-use shapes::SyncShape;
+use crate::rays::Ray;
+use crate::shapes::SyncShape;
+use crate::tuples::Tuple;
 use std::sync::Arc;
-use tuples::Tuple;
 
 pub const EPSILON: f64 = 1e-10;
 
@@ -134,15 +134,15 @@ impl Intersection {
 #[cfg(test)]
 mod spec {
     use super::*;
+    use crate::planes::plane;
+    use crate::rays::ray;
+    use crate::spheres::glass_sphere;
+    use crate::spheres::sphere;
+    use crate::transformations::scaling;
+    use crate::transformations::translation;
+    use crate::tuples::point;
+    use crate::tuples::vector;
     use hamcrest2::prelude::*;
-    use planes::plane;
-    use rays::ray;
-    use spheres::glass_sphere;
-    use spheres::sphere;
-    use transformations::scaling;
-    use transformations::translation;
-    use tuples::point;
-    use tuples::vector;
 
     #[test]
     fn an_intersection_encapsulates_t_and_object() {

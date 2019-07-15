@@ -1,6 +1,6 @@
+use crate::tuples::{tuple, Tuple};
 use std::ops::Index;
 use std::ops::Mul;
-use tuples::{tuple, Tuple};
 
 #[derive(Clone, Debug)]
 pub struct Matrix {
@@ -171,7 +171,7 @@ pub fn identity_matrix() -> Matrix {
 #[cfg(test)]
 mod spec {
     use super::*;
-    use tuples::tuple;
+    use crate::tuples::tuple;
 
     #[test]
     fn constructing_and_inspecting_a_4x4_matrix() {

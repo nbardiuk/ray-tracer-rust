@@ -1,14 +1,14 @@
-use intersections::hit;
-use intersections::Comps;
-use intersections::Intersection;
-use lights::PointLight;
-use rays::ray;
-use rays::Ray;
-use shapes::SyncShape;
+use crate::intersections::hit;
+use crate::intersections::Comps;
+use crate::intersections::Intersection;
+use crate::lights::PointLight;
+use crate::rays::ray;
+use crate::rays::Ray;
+use crate::shapes::SyncShape;
+use crate::tuples::color;
+use crate::tuples::Color;
+use crate::tuples::Tuple;
 use std::sync::Arc;
-use tuples::color;
-use tuples::Color;
-use tuples::Tuple;
 
 pub const MAX_REFLECTIONS: i8 = 6;
 
@@ -105,18 +105,18 @@ impl World {
 #[cfg(test)]
 pub mod spec {
     use super::*;
+    use crate::intersections::intersection;
+    use crate::lights::point_light;
+    use crate::patterns::spec::test_pattern;
+    use crate::planes::plane;
+    use crate::rays::ray;
+    use crate::spheres::sphere;
+    use crate::transformations::scaling;
+    use crate::transformations::translation;
+    use crate::tuples::color;
+    use crate::tuples::point;
+    use crate::tuples::vector;
     use hamcrest2::prelude::*;
-    use intersections::intersection;
-    use lights::point_light;
-    use patterns::spec::test_pattern;
-    use planes::plane;
-    use rays::ray;
-    use spheres::sphere;
-    use transformations::scaling;
-    use transformations::translation;
-    use tuples::color;
-    use tuples::point;
-    use tuples::vector;
 
     pub fn default_world() -> World {
         let mut s1 = sphere();

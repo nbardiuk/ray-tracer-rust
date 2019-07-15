@@ -1,4 +1,4 @@
-use tuples::{color, Color};
+use crate::tuples::{color, Color};
 
 pub struct Canvas {
     pub width: usize,
@@ -29,7 +29,7 @@ impl Canvas {
 #[cfg(test)]
 mod spec {
     use super::*;
-    use tuples::color;
+    use crate::tuples::color;
 
     #[test]
     fn creating_a_canvas() {

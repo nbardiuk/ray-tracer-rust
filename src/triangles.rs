@@ -1,17 +1,17 @@
-use bounds::bound_vector;
-use bounds::Bounds;
-use intersections::intersection;
-use intersections::Intersection;
-use intersections::EPSILON;
-use materials::material;
-use materials::Material;
-use matrices::identity_matrix;
-use matrices::Matrix;
-use rays::Ray;
-use shapes::Shape;
-use shapes::SyncShape;
+use crate::bounds::bound_vector;
+use crate::bounds::Bounds;
+use crate::intersections::intersection;
+use crate::intersections::Intersection;
+use crate::intersections::EPSILON;
+use crate::materials::material;
+use crate::materials::Material;
+use crate::matrices::identity_matrix;
+use crate::matrices::Matrix;
+use crate::rays::Ray;
+use crate::shapes::Shape;
+use crate::shapes::SyncShape;
+use crate::tuples::Tuple;
 use std::sync::Arc;
-use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Triangle {
@@ -93,9 +93,9 @@ pub fn triangle(p1: Tuple, p2: Tuple, p3: Tuple) -> Triangle {
 #[cfg(test)]
 mod spec {
     use super::*;
-    use rays::ray;
-    use tuples::point;
-    use tuples::vector;
+    use crate::rays::ray;
+    use crate::tuples::point;
+    use crate::tuples::vector;
 
     #[test]
     fn constucting_a_triangle() {

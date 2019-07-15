@@ -1,8 +1,8 @@
-use lights::PointLight;
-use patterns::SyncPattern;
-use shapes::Shape;
+use crate::lights::PointLight;
+use crate::patterns::SyncPattern;
+use crate::shapes::Shape;
+use crate::tuples::{color, Color, Tuple};
 use std::sync::Arc;
-use tuples::{color, Color, Tuple};
 
 #[derive(Debug, PartialEq)]
 pub struct Material {
@@ -80,11 +80,11 @@ impl Material {
 #[cfg(test)]
 mod spec {
     use super::*;
+    use crate::lights::point_light;
+    use crate::patterns::stripe_pattern;
+    use crate::spheres::sphere;
+    use crate::tuples::{color, point, vector};
     use hamcrest2::prelude::*;
-    use lights::point_light;
-    use patterns::stripe_pattern;
-    use spheres::sphere;
-    use tuples::{color, point, vector};
 
     #[test]
     fn the_default_material() {

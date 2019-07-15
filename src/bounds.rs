@@ -1,8 +1,8 @@
-use matrices::Matrix;
-use rays::Ray;
+use crate::matrices::Matrix;
+use crate::rays::Ray;
+use crate::tuples::point;
+use crate::tuples::Tuple;
 use std::ops::Add;
-use tuples::point;
-use tuples::Tuple;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Bounds {
@@ -91,12 +91,12 @@ impl Add for Bounds {
 #[cfg(test)]
 mod spec {
     use super::*;
-    use rays::ray;
+    use crate::rays::ray;
+    use crate::transformations::rotation_x;
+    use crate::transformations::rotation_y;
+    use crate::transformations::rotation_z;
+    use crate::tuples::vector;
     use std::f64::consts::PI;
-    use transformations::rotation_x;
-    use transformations::rotation_y;
-    use transformations::rotation_z;
-    use tuples::vector;
 
     #[test]
     fn bound_is_a_pair_of_points() {

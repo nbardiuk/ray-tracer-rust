@@ -1,15 +1,15 @@
-use canvas::canvas;
-use canvas::Canvas;
-use matrices::identity_matrix;
-use matrices::Matrix;
-use rays::ray;
-use rays::Ray;
+use crate::canvas::canvas;
+use crate::canvas::Canvas;
+use crate::matrices::identity_matrix;
+use crate::matrices::Matrix;
+use crate::rays::ray;
+use crate::rays::Ray;
+use crate::tuples::point;
+use crate::tuples::Color;
+use crate::world::World;
+use crate::world::MAX_REFLECTIONS;
 use std::ops::Range;
 use std::sync::mpsc::Sender;
-use tuples::point;
-use tuples::Color;
-use world::World;
-use world::MAX_REFLECTIONS;
 
 #[derive(Clone)]
 pub struct Camera {
@@ -103,17 +103,17 @@ impl Camera {
 #[cfg(test)]
 mod spec {
     use super::*;
+    use crate::matrices::identity_matrix;
+    use crate::transformations::rotation_y;
+    use crate::transformations::translation;
+    use crate::transformations::view_transform;
+    use crate::tuples::color;
+    use crate::tuples::point;
+    use crate::tuples::vector;
+    use crate::world::spec::default_world;
     use hamcrest2::prelude::*;
-    use matrices::identity_matrix;
     use std::f64::consts::PI;
     use std::f64::EPSILON;
-    use transformations::rotation_y;
-    use transformations::translation;
-    use transformations::view_transform;
-    use tuples::color;
-    use tuples::point;
-    use tuples::vector;
-    use world::spec::default_world;
 
     #[test]
     fn constructing_a_camera() {

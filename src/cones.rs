@@ -1,21 +1,21 @@
-use bounds::bound;
-use bounds::Bounds;
-use intersections::intersection;
-use intersections::Intersection;
-use intersections::EPSILON;
-use materials::material;
-use materials::Material;
-use matrices::identity_matrix;
-use matrices::Matrix;
-use rays::Ray;
-use shapes::Shape;
-use shapes::SyncShape;
+use crate::bounds::bound;
+use crate::bounds::Bounds;
+use crate::intersections::intersection;
+use crate::intersections::Intersection;
+use crate::intersections::EPSILON;
+use crate::materials::material;
+use crate::materials::Material;
+use crate::matrices::identity_matrix;
+use crate::matrices::Matrix;
+use crate::rays::Ray;
+use crate::shapes::Shape;
+use crate::shapes::SyncShape;
+use crate::tuples::point;
+use crate::tuples::vector;
+use crate::tuples::Tuple;
 use std::f64::INFINITY;
 use std::f64::NEG_INFINITY;
 use std::sync::Arc;
-use tuples::point;
-use tuples::vector;
-use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Cone {
@@ -134,10 +134,10 @@ pub fn cone() -> Cone {
 #[cfg(test)]
 mod spec {
     use super::*;
+    use crate::rays::ray;
+    use crate::tuples::point;
+    use crate::tuples::vector;
     use hamcrest2::prelude::*;
-    use rays::ray;
-    use tuples::point;
-    use tuples::vector;
 
     #[test]
     fn intersecting_a_cone_with_a_ray() {

@@ -27,13 +27,16 @@ extern crate sdl2;
 #[macro_use]
 extern crate hamcrest2;
 
-use camera::camera;
-use canvas::canvas;
-use groups::Group;
-use lights::point_light;
-use obj_file::parse_obj;
-use patterns::checkers_pattern;
-use planes::plane;
+use crate::camera::camera;
+use crate::canvas::canvas;
+use crate::groups::Group;
+use crate::lights::point_light;
+use crate::obj_file::parse_obj;
+use crate::patterns::checkers_pattern;
+use crate::planes::plane;
+use crate::transformations::*;
+use crate::tuples::{color, f_u8, point, vector};
+use crate::world::world;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -46,9 +49,6 @@ use std::sync::mpsc::channel;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use transformations::*;
-use tuples::{color, f_u8, point, vector};
-use world::world;
 
 fn read_teapot() -> std::io::Result<Group> {
     let mut file = File::open("objs/teapot-low.obj")?;

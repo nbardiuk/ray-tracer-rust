@@ -1,5 +1,5 @@
-use matrices::Matrix;
-use tuples::Tuple;
+use crate::matrices::Matrix;
+use crate::tuples::Tuple;
 
 pub struct Ray {
     pub origin: Tuple,
@@ -23,8 +23,8 @@ pub fn ray(origin: Tuple, direction: Tuple) -> Ray {
 #[cfg(test)]
 mod spec {
     use super::*;
-    use transformations::{scaling, translation};
-    use tuples::{point, vector};
+    use crate::transformations::{scaling, translation};
+    use crate::tuples::{point, vector};
 
     #[test]
     fn creating_and_querying_a_ray() {

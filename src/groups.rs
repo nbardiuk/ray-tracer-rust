@@ -1,16 +1,16 @@
-use bounds::bound_single;
-use bounds::Bounds;
-use intersections::Intersection;
-use materials::material;
-use materials::Material;
-use matrices::identity_matrix;
-use matrices::Matrix;
-use rays::Ray;
-use shapes::Shape;
-use shapes::SyncShape;
+use crate::bounds::bound_single;
+use crate::bounds::Bounds;
+use crate::intersections::Intersection;
+use crate::materials::material;
+use crate::materials::Material;
+use crate::matrices::identity_matrix;
+use crate::matrices::Matrix;
+use crate::rays::Ray;
+use crate::shapes::Shape;
+use crate::shapes::SyncShape;
+use crate::tuples::point;
+use crate::tuples::Tuple;
 use std::sync::Arc;
-use tuples::point;
-use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Group {
@@ -125,16 +125,16 @@ pub fn group_with_children(children: Vec<Arc<SyncShape>>) -> Group {
 #[cfg(test)]
 mod spec {
     use super::*;
-    use bounds::bound;
+    use crate::bounds::bound;
+    use crate::matrices::identity_matrix;
+    use crate::rays::ray;
+    use crate::shapes::spec::test_shape;
+    use crate::spheres::sphere;
+    use crate::transformations::scaling;
+    use crate::transformations::translation;
+    use crate::tuples::point;
+    use crate::tuples::vector;
     use hamcrest2::prelude::*;
-    use matrices::identity_matrix;
-    use rays::ray;
-    use shapes::spec::test_shape;
-    use spheres::sphere;
-    use transformations::scaling;
-    use transformations::translation;
-    use tuples::point;
-    use tuples::vector;
 
     #[test]
     fn creating_a_new_group() {

@@ -1,16 +1,16 @@
-use bounds::bound;
-use bounds::Bounds;
-use intersections::intersection;
-use intersections::intersections;
-use intersections::Intersection;
-use materials::{material, Material};
-use matrices::{identity_matrix, Matrix};
-use rays::Ray;
-use shapes::Shape;
-use shapes::SyncShape;
+use crate::bounds::bound;
+use crate::bounds::Bounds;
+use crate::intersections::intersection;
+use crate::intersections::intersections;
+use crate::intersections::Intersection;
+use crate::materials::{material, Material};
+use crate::matrices::{identity_matrix, Matrix};
+use crate::rays::Ray;
+use crate::shapes::Shape;
+use crate::shapes::SyncShape;
+use crate::tuples::point;
+use crate::tuples::Tuple;
 use std::sync::Arc;
-use tuples::point;
-use tuples::Tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Sphere {
@@ -76,9 +76,9 @@ impl Shape for Sphere {
 #[cfg(test)]
 mod spec {
     use super::*;
-    use rays::ray;
-    use transformations::{scaling, translation};
-    use tuples::{point, vector};
+    use crate::rays::ray;
+    use crate::transformations::{scaling, translation};
+    use crate::tuples::{point, vector};
 
     #[test]
     fn a_ray_intersects_a_sphere_at_two_points() {

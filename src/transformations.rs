@@ -1,7 +1,7 @@
-use matrices::identity_matrix;
-use matrices::matrix;
-use matrices::Matrix;
-use tuples::Tuple;
+use crate::matrices::identity_matrix;
+use crate::matrices::matrix;
+use crate::matrices::Matrix;
+use crate::tuples::Tuple;
 
 pub fn translation(x: f64, y: f64, z: f64) -> Matrix {
     let mut data = identity_matrix().data;
@@ -79,9 +79,9 @@ pub fn view_transform(from: &Tuple, to: &Tuple, up: &Tuple) -> Matrix {
 #[cfg(test)]
 mod spec {
     use super::*;
-    use matrices::matrix;
+    use crate::matrices::matrix;
+    use crate::tuples::{point, vector};
     use std::f64::consts::PI;
-    use tuples::{point, vector};
 
     #[test]
     fn multiplying_by_a_translation_matrix() {
