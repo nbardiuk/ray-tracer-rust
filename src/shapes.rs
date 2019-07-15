@@ -6,7 +6,7 @@ use crate::rays::Ray;
 use crate::tuples::Tuple;
 use std::sync::Arc;
 
-pub type SyncShape = Shape + Sync + Send;
+pub type SyncShape = dyn Shape + Sync + Send;
 
 pub trait Shape {
     fn material(&self) -> &Material;

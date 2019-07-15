@@ -1,18 +1,18 @@
 use crate::matrices::identity_matrix;
 use crate::matrices::Matrix;
-use crate::shapes::Shape;
+use crate::shapes::SyncShape;
 use crate::tuples::Color;
 use crate::tuples::Tuple;
 use std::sync::Arc;
 
-pub type SyncPattern = Pattern + Sync + Send;
+pub type SyncPattern = dyn Pattern + Sync + Send;
 
 pub trait Pattern {
     fn invtransform(&self) -> &Matrix;
     fn set_invtransform(&mut self, invtransform: Matrix);
 
     fn at(&self, point: &Tuple) -> Color;
-    fn at_shape(&self, shape: Arc<Shape>, world_point: &Tuple) -> Color {
+    fn at_shape(&self, shape: Arc<SyncShape>, world_point: &Tuple) -> Color {
         let shape_point = shape.world_to_object(world_point);
         let pattern_point = self.invtransform() * &shape_point;
         self.at(&pattern_point)

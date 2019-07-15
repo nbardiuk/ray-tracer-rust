@@ -1,6 +1,6 @@
 use crate::lights::PointLight;
 use crate::patterns::SyncPattern;
-use crate::shapes::Shape;
+use crate::shapes::SyncShape;
 use crate::tuples::{color, Color, Tuple};
 use std::sync::Arc;
 
@@ -34,7 +34,7 @@ pub fn material() -> Material {
 impl Material {
     pub fn lighting(
         &self,
-        object: Arc<Shape>,
+        object: Arc<SyncShape>,
         light: &PointLight,
         position: &Tuple,
         eye: &Tuple,
